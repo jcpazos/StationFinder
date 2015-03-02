@@ -18,6 +18,8 @@
   <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
 
   <!-- Other module inherits                                      -->
+  <inherits name="com.google.maps.gwt.GoogleMaps" />
+  
 
   <!-- Specify the app entry point class.                         -->
   <entry-point class='com.google.gwt.chargingstationfinder.client.ChargingStationFinderApp'/>
