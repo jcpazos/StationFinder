@@ -1,5 +1,6 @@
 package com.google.gwt.chargingstationfinder.client;
 
+
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,10 +16,16 @@ import com.google.gwt.geolocation.client.Position;
 import com.google.gwt.geolocation.client.PositionError;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.maps.gwt.client.GoogleMap;
 import com.google.maps.gwt.client.LatLng;
 import com.google.maps.gwt.client.MapOptions;
@@ -38,6 +45,12 @@ public class ChargingStationFinderApp implements EntryPoint {
 			+ "connection and try again.";
 	private final StationServiceAsync stationService = GWT.create(StationService.class);
 	private final String mapURL = "http://vanmapp1.vancouver.ca/gmaps/covmap_data.htm?map=electric_vehicle_charging_stations.kmz";
+	 private VerticalPanel mainPanel = new VerticalPanel();
+	  private FlexTable addressFlexTable = new FlexTable();
+	  private HorizontalPanel addPanel = new HorizontalPanel();
+	  private TextBox newSymbolTextBox = new TextBox();
+	  private Button addAddressButton = new Button("Add");
+	  private Label lastUpdatedLabel = new Label();
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
@@ -52,7 +65,24 @@ public class ChargingStationFinderApp implements EntryPoint {
 		parser.run(stations);
 		addStations();*/
 		
+		addressFlexTable.setText(0, 0, "Address");
 		
+
+	    // Assemble Add Address panel.
+	    addPanel.add(newSymbolTextBox);
+	    addPanel.add(addAddressButton);
+
+	    // Assemble Main panel.
+	    mainPanel.add(addressFlexTable);
+	    mainPanel.add(addPanel);
+	    mainPanel.add(lastUpdatedLabel);
+
+	    // Associate the Main panel with the HTML host page.
+	    RootPanel.get("adressList").add(mainPanel);
+
+	    // Move cursor focus to the input box.
+	    newSymbolTextBox.setFocus(true);
+
 		
 		FormPanel formPanel = new FormPanel();
 		Geolocation geoLocation = Geolocation.getIfSupported();
