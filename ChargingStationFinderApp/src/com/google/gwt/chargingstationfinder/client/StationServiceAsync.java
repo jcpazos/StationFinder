@@ -8,5 +8,6 @@ public interface StationServiceAsync {
 			AsyncCallback<Void> async);
 	public void removeStation(String address, AsyncCallback<Void> async);
 	public void getStations(AsyncCallback<String[]> async);
+	public void checkIsAdmin(AsyncCallback<Void> async) throws NotAdminException;
 
 }

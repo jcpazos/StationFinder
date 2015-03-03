@@ -26,8 +26,8 @@ StationService {
 	      JDOHelper.getPersistenceManagerFactory("transactions-optional");
 
 	  public void addStation(double latitude, double longitude,String operator, String address) throws NotLoggedInException, NotAdminException {
-	    /*checkLoggedIn();
-	    checkIsAdmin();*/
+	    checkLoggedIn();
+	    checkIsAdmin();
 	    PersistenceManager pm = getPersistenceManager();
 	    try {
 	      pm.makePersistent(new Station(latitude, longitude, operator, address));
@@ -93,7 +93,7 @@ StationService {
 	    return PMF.getPersistenceManager();
 	  }
 	  
-	  private void checkIsAdmin() throws NotAdminException {
+	  public void checkIsAdmin() throws NotAdminException {
 			if (!UserServiceFactory.getUserService().isUserAdmin())
 				throw new NotAdminException("User is not an admin");
 			

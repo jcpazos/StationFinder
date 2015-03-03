@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.appengine.api.users.UserServiceFactory;
 import com.google.gwt.chargingstationfinder.server.Station;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
@@ -16,10 +15,16 @@ import com.google.gwt.geolocation.client.Position;
 import com.google.gwt.geolocation.client.PositionError;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.maps.gwt.client.GoogleMap;
 import com.google.maps.gwt.client.InfoWindow;
 import com.google.maps.gwt.client.InfoWindowOptions;
@@ -31,6 +36,7 @@ import com.google.maps.gwt.client.Marker;
 import com.google.maps.gwt.client.Marker.ClickHandler;
 import com.google.maps.gwt.client.MarkerOptions;
 import com.google.maps.gwt.client.MouseEvent;
+import com.google.gwt.user.client.ui.Label;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -46,7 +52,20 @@ public class ChargingStationFinderApp implements EntryPoint {
 			+ "attempting to contact the server. Please check your network "
 			+ "connection and try again.";
 	private final StationServiceAsync stationService = GWT.create(StationService.class);
-	private final String mapURL = "http://vanmapp1.vancouver.ca/gmaps/covmap_data.htm?map=electric_vehicle_charging_stations.kmz";
+	private VerticalPanel mainPanel = new VerticalPanel();
+	private FlexTable addressFlexTable = new FlexTable();
+	private HorizontalPanel addPanel = new HorizontalPanel();
+	private TextBox newSymbolTextBox = new TextBox();
+	private Button addAddressButton = new Button("Add");
+	private Button addStationsButton = new Button("AddStations");
+	private Label lastUpdatedLabel = new Label();
+	private Anchor signInLink = new Anchor("Sign In");
+	private Anchor signOutLink = new Anchor("Sign Out");
+	private LoginInfo loginInfo = null;
+	private Label loginLabel = new Label(
+		      "Please sign in to your Google Account to access the StationFinder application.");
+	private VerticalPanel loginPanel = new VerticalPanel();
+	private CSVParser parser = new CSVParser(this);
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
@@ -57,13 +76,88 @@ public class ChargingStationFinderApp implements EntryPoint {
 	 */
 	public void onModuleLoad() {
 		
-		CSVParser parser = new CSVParser(this);
-		parser.run(stations);
-		loadMap();
-		
+		// Check login status using login service.
+		  System.out.println("HI");
+		    LoginServiceAsync loginService = GWT.create(LoginService.class);
+		    loginService.login(GWT.getHostPageBaseURL(), new AsyncCallback<LoginInfo>() {
+		      public void onFailure(Throwable error) {
+		    	  handleError(error);
+		      }
+
+		      public void onSuccess(LoginInfo result) {
+		        loginInfo = result;
+		        if(loginInfo.isLoggedIn()) {
+		          loadStationFinderApp();
+		        } else {
+		          loadLogin();
+		        }
+		      }
+		    });
+		  }
+
+	protected void loadLogin() {
+		// Assemble login panel.
+		signInLink.setHref(loginInfo.getLoginUrl());
+		loginPanel.add(loginLabel);
+		loginPanel.add(signInLink);
+		RootPanel.get("stationList").add(loginPanel);
 	}
 
+    private void loadStationFinderApp() {
+    	// Set up sign out hyperlink.
+	    signOutLink.setHref(loginInfo.getLogoutUrl());
+	    mainPanel.add(signOutLink);
+	    
+	    
+	    addressFlexTable.setText(0, 0, "Address");
+
+	    // Assemble Add Address panel.
+	    addPanel.add(newSymbolTextBox);
+	    addPanel.add(addAddressButton);
+	    try {
+			stationService.checkIsAdmin(new AsyncCallback<Void>(){
+
+				@Override
+				public void onFailure(Throwable caught) {
+					caught.getMessage();
+					
+				}
+
+				@Override
+				public void onSuccess(Void result) {
+					addPanel.add(addStationsButton);
+			    	//Unfortunately GWT has two classes ClickHandler that do very different things
+			    	addStationsButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+
+						@Override
+						public void onClick(ClickEvent event) {
+							parser.run(stations);
+						}
+				  });}
+				});
+		} catch (NotAdminException e) {
+			//do nothing, user is not an admin
+		} 
+	    
+
+	    // Assemble Main panel.
+	    mainPanel.add(addressFlexTable);
+	    mainPanel.add(addPanel);
+	    mainPanel.add(lastUpdatedLabel);
+
+	    // Associate the Main panel with the HTML host page.
+	    RootPanel.get("Address").add(mainPanel);
+
+	    // Move cursor focus to the input box.
+	    newSymbolTextBox.setFocus(true);	    
+
+		loadMap();
+    }
+
 	private void loadMap() {
+		
+		
+		
 		formPanel = new FormPanel();
 		Geolocation geoLocation = Geolocation.getIfSupported();
 		
@@ -90,7 +184,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	protected void addStation(final String[] station) {
-			/*stationService.addStation(Double.parseDouble(station[0]), 
+			stationService.addStation(Double.parseDouble(station[0]), 
 					Double.parseDouble(station[1]),station[2], station[3], 
 					new AsyncCallback<Void>() {
 				
@@ -100,8 +194,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				public void onSuccess(Void result) {
 					displayStation(station);
 				}
-			});*/
-			displayStation(station);
+			});
 		}
 
 
@@ -115,8 +208,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 		MarkerOptions markerOptions = MarkerOptions.create();
 		markerOptions.setPosition(position);
 		final Marker m = Marker.create(markerOptions);
-		m.setMap(gMap);
 		
+		m.setMap(gMap);
 		m.addClickListener(new ClickHandler(){
 
 			@Override
