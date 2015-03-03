@@ -10,6 +10,7 @@ import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.geolocation.client.Geolocation;
 import com.google.gwt.geolocation.client.Position;
 import com.google.gwt.geolocation.client.PositionError;
@@ -20,10 +21,16 @@ import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.maps.gwt.client.GoogleMap;
+import com.google.maps.gwt.client.InfoWindow;
+import com.google.maps.gwt.client.InfoWindowOptions;
 import com.google.maps.gwt.client.LatLng;
 import com.google.maps.gwt.client.MapOptions;
 import com.google.maps.gwt.client.MapTypeId;
 import com.google.maps.gwt.client.KmlLayer;
+import com.google.maps.gwt.client.Marker;
+import com.google.maps.gwt.client.Marker.ClickHandler;
+import com.google.maps.gwt.client.MarkerOptions;
+import com.google.maps.gwt.client.MouseEvent;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -32,7 +39,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 	
 	private LatLng userPosition;
 	private String[][] stations;
-	private static final Logger LOG = Logger.getLogger(ChargingStationFinderApp.class.getName());
+	private GoogleMap gMap;
+	private FormPanel formPanel;
+	private Logger logger = Logger.getLogger(ChargingStationFinderApp.class.getName());
 	private static final String SERVER_ERROR = "An error occurred while "
 			+ "attempting to contact the server. Please check your network "
 			+ "connection and try again.";
@@ -48,13 +57,14 @@ public class ChargingStationFinderApp implements EntryPoint {
 	 */
 	public void onModuleLoad() {
 		
-		/*CSVParser parser = new CSVParser();
+		CSVParser parser = new CSVParser(this);
 		parser.run(stations);
-		addStations();*/
+		loadMap();
 		
-		
-		
-		FormPanel formPanel = new FormPanel();
+	}
+
+	private void loadMap() {
+		formPanel = new FormPanel();
 		Geolocation geoLocation = Geolocation.getIfSupported();
 		
 		userPosition = LatLng.create(49.259909, -123.162542);
@@ -72,32 +82,51 @@ public class ChargingStationFinderApp implements EntryPoint {
 				
 			}});
 		
-		GoogleMap gMap = displayMap(formPanel);
-		
-		
+		displayMap(formPanel);
+	}
+	
+	protected void addStations(String[][] stations) {
+		this.stations = stations;
 	}
 
-	private void addStations() {
-		for (final String[] s: stations) {
-			stationService.addStation(Double.parseDouble(s[0]), Double.parseDouble(s[1]), 
-					s[2], s[3], new AsyncCallback<Void>() {
+	protected void addStation(final String[] station) {
+			/*stationService.addStation(Double.parseDouble(station[0]), 
+					Double.parseDouble(station[1]),station[2], station[3], 
+					new AsyncCallback<Void>() {
 				
 				public void onFailure(Throwable caught) {
 					handleError(caught);
 				}
 				public void onSuccess(Void result) {
-					displayStation(s);
+					displayStation(station);
 				}
-			});
+			});*/
+			displayStation(station);
 		}
 
-	}
 
 	private void displayStation(String[] s) {
-		// TODO Auto-generated method stub
+		LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
+		
+		InfoWindowOptions windowOptions = InfoWindowOptions.create();
+		windowOptions.setContent(s[2] + "\r\n" + s[3]);
+		final InfoWindow iw = InfoWindow.create(windowOptions);
+		
+		MarkerOptions markerOptions = MarkerOptions.create();
+		markerOptions.setPosition(position);
+		final Marker m = Marker.create(markerOptions);
+		m.setMap(gMap);
+		
+		m.addClickListener(new ClickHandler(){
+
+			@Override
+			public void handle(MouseEvent event) {
+				iw.open(gMap, m);
+				
+			}});
 	}
 
-	private GoogleMap displayMap(FormPanel formPanel) {
+	private void displayMap(FormPanel formPanel) {
 		formPanel.setWidth("500px");
 	    formPanel.setHeight("650px");
 
@@ -110,15 +139,14 @@ public class ChargingStationFinderApp implements EntryPoint {
 	    options.setDraggable(true);
 	    options.setMapTypeControl(true);
 	    options.setScaleControl(true);
-	    options.setScrollwheel(true);
+	    options.setScrollwheel(true);	
 
-	    GoogleMap gMap = GoogleMap.create(formPanel.getElement(), options);
-        LOG.log(Level.SEVERE, this.userPosition.toString());
+	    gMap = GoogleMap.create(formPanel.getElement(), options);
 	    gMap.setCenter(this.userPosition);
-	    return gMap;
 	}
 	
 	private void handleError(Throwable error) {
+		logger.log(Level.SEVERE, "no");
 	    Window.alert(error.getMessage());
 	    if (error instanceof NotLoggedInException) {
 	      //Window.Location.replace(loginInfo.getLogoutUrl());

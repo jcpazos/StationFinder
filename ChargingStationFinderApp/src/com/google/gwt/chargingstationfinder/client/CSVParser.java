@@ -9,37 +9,64 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
+import com.google.gwt.user.client.Window;
 
 
 
 public class CSVParser {
+
+	private String[][] stations;
+	final static String fileLoc = "parsed/stations.txt"; 
+	private Logger logger = Logger.getLogger(CSVParser.class.getName());
+	ChargingStationFinderApp app;
 	
-	final static String myURL = "ftp://webftp.vancouver.ca/OpenData/csv/electric_vehicle_charging_stations.csv";
-	
+	public CSVParser(ChargingStationFinderApp app) {
+		this.stations = new String[100][4];
+		this.app = app;
+	}
 	
 	public void run(String[][] stations) {
-		
-		InputStream is = null;
-		String[] station;
-		
-		try {
-			URL url = new URL (myURL);
-			URLConnection urlc = url.openConnection();
-			is = urlc.getInputStream();
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
-			String line = br.readLine();
-			int i = 0;
-			while ((line = br.readLine()) != null) {
-				station = line.split(",");
-				for (int j =0 ; j<4; j++) {
-					stations[i][j] = station[j];
-				}
-			}
-			
-		} catch (IOException e) {
-			e.printStackTrace();
+		try { 
+			sendRequest();
+		} catch (RequestException e) {
+			logger.log(Level.SEVERE, e.getMessage());
 		}
+	}
+
+	private void sendRequest() throws RequestException {
+		Request r = new RequestBuilder(RequestBuilder.GET, fileLoc).sendRequest("", new RequestCallback() {
+			@Override
+			public void onResponseReceived(Request req, Response resp) {
+				String text = resp.getText();
+				String[] splitArray = text.split("\\r?\\n");
+				ArrayList<String> splitStations = new ArrayList<String>(Arrays.asList(splitArray));
+				splitStations.remove(0);
+				int i = 0;
+				for (String s: splitStations) {
+					String[] station = s.split(",");
+					for (int j=0; j<4;j++) {
+						stations[i][j] = station[j];
+					}
+					app.addStation(stations[i]);
+					i++;
+				}
+				app.addStations(stations);
+			}
+
+			@Override
+			public void onError(Request res, Throwable throwable) {
+				logger.log(Level.SEVERE, throwable.getMessage());
+			}
+		});
 	}
 }
