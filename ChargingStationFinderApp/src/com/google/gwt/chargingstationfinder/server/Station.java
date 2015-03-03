@@ -16,8 +16,6 @@ public class Station {
 	private Long id;
 	
 	@Persistent
-	private User user;
-	@Persistent
 	private double latitude;
 	@Persistent
 	private double longitude;
@@ -26,28 +24,58 @@ public class Station {
 	@Persistent
 	private String operator;
 	
-	public Station(double latitude, double longitude,String operator, String address, User u) {
+	public Station(double latitude, double longitude,String operator, String address) {
 		this.address = address;
 		this.latitude = latitude;
 		this.longitude = longitude;
 		this.operator = operator;
-		this.user = u;
 	}
 	
 	public Long getId() {
 		return this.id;
 	}
 
-	public User getUser() {
-		return this.user;
-	}
-	
-	public void setUser(User user) {
-		this.user = user;
-	}
-
-	public Object getAddress() {
+	public String getAddress() {
 		return address;
 	}
+	
+	public double getLatitude() {
+		return latitude;
+	}
+	
+	public double getLongitude() {
+		return longitude;
+	}
+	
+	public String getOperator() {
+		return operator;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((address == null) ? 0 : address.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Station other = (Station) obj;
+		if (address == null) {
+			if (other.address != null)
+				return false;
+		} else if (!address.equals(other.address))
+			return false;
+		return true;
+	}
+	
+	
 
 }
