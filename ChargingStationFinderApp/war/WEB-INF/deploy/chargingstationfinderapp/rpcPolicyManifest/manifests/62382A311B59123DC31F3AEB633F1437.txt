@@ -1,0 +1,2 @@
+serviceClass: com.google.gwt.chargingstationfinder.client.StationService
+path: BF833DF82148702214C289C675A2C90A.gwt.rpc

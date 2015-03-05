@@ -255,10 +255,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void displayMap(FormPanel formPanel) {
-		formPanel.setWidth("500px");
-	    formPanel.setHeight("650px");
+		formPanel.setWidth("800px");
+	    formPanel.setHeight("950px");
 
-	    RootPanel.get().add(formPanel);
+	    RootPanel.get("mapDisplay").add(formPanel);
 
 	    MapOptions options = MapOptions.create();
 
