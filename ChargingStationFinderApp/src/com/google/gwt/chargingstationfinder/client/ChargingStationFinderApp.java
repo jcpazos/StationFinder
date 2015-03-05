@@ -118,7 +118,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 	    addPanel.add(addAddressButton);
 	    
 	    initializeAddStationsButton(); 
-	    
 
 	    // Assemble Main panel.
 	    mainPanel.add(addressFlexTable);

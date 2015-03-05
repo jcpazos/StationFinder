@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +18,7 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 
 
@@ -26,6 +26,7 @@ import com.google.gwt.user.client.Window;
 public class CSVParser {
 
 	private String[][] stations;
+	final static String myURL = "http://pastebin.com/raw.php?i=Re1qJKj3";
 	final static String fileLoc = "parsed/stations.txt"; 
 	private Logger logger = Logger.getLogger(CSVParser.class.getName());
 	ChargingStationFinderApp app;
@@ -42,7 +43,6 @@ public class CSVParser {
 			logger.log(Level.SEVERE, e.getMessage());
 		}
 	}
-
 	private void sendRequest() throws RequestException {
 		Request r = new RequestBuilder(RequestBuilder.GET, fileLoc).sendRequest("", new RequestCallback() {
 			@Override
