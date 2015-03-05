@@ -58,6 +58,10 @@ public class Station {
 		result = prime * result + ((address == null) ? 0 : address.hashCode());
 		return result;
 	}
+	
+	public String toString() {
+		return (latitude +"," +longitude + "," + operator + "," + address);
+	}
 
 	@Override
 	public boolean equals(Object obj) {

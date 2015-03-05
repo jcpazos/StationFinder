@@ -31,7 +31,7 @@ public class CSVParser {
 	ChargingStationFinderApp app;
 	
 	public CSVParser(ChargingStationFinderApp app) {
-		this.stations = new String[100][4];
+		this.stations = new String[23][4];
 		this.app = app;
 	}
 	

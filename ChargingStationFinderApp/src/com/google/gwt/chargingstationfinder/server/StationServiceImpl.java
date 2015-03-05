@@ -1,7 +1,9 @@
 package com.google.gwt.chargingstationfinder.server;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -9,6 +11,7 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
+import javax.jdo.Transaction;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -17,11 +20,12 @@ import com.google.gwt.chargingstationfinder.client.NotAdminException;
 import com.google.gwt.chargingstationfinder.client.NotLoggedInException;
 import com.google.gwt.chargingstationfinder.client.StationService;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.maps.gwt.client.LatLng;
 
 public class StationServiceImpl extends RemoteServiceServlet implements
 StationService {
 	
-	private static final Logger LOG = Logger.getLogger(StationServiceImpl.class.getName());
+	private Logger logger = Logger.getLogger(StationServiceImpl.class.getName());
 	  private static final PersistenceManagerFactory PMF =
 	      JDOHelper.getPersistenceManagerFactory("transactions-optional");
 
@@ -52,30 +56,37 @@ StationService {
 	        }
 	      }
 	      if (deleteCount != 1) {
-	        LOG.log(Level.WARNING, "removeStock deleted "+deleteCount+" Stocks");
+	        logger.log(Level.WARNING, "removeStock deleted "+deleteCount+" Stocks");
 	      }
 	    } finally {
 	      pm.close();
 	    }
 	  }
 
-	  public String[] getStations() throws NotLoggedInException {
+	  public String[][] getStations() throws NotLoggedInException {
 	    checkLoggedIn();
 	    PersistenceManager pm = getPersistenceManager();
-	    List<String> symbols = new ArrayList<String>();
+	    String[][] returnVal = null;
 	    try {
-	      Query q = pm.newQuery(Station.class, "user == u");
-	      q.declareParameters("com.google.appengine.api.users.User u");
-	      q.setOrdering("createDate");
-	      List<Station> stations = (List<Station>) q.execute(getUser());
+	      Query q = pm.newQuery(Station.class);
+	      List<Station> stations = (List<Station>) q.execute();
+	      int i=0;
+	      if (stations.size() == 0) return null;
+	      if (stations.get(0) == null) return null;
+	      logger.log(Level.SEVERE, "size is " + stations.size());
+	      returnVal = new String[stations.size()][4];
 	      for (Station station : stations) {
-	        //symbols.add(station.getSymbol());
-	    	 //finish implementation for getStations
-	      }
+	        	  returnVal[i][0] = Double.toString(station.getLatitude());
+	        	  returnVal[i][1] = Double.toString(station.getLongitude());
+	        	  returnVal[i][2] = station.getOperator();
+	        	  returnVal[i][3] = station.getAddress(); 
+	        	  i++;
+	          }
 	    } finally {
 	      pm.close();
+	      
 	    }
-	    return (String[]) symbols.toArray(new String[0]);
+	    return returnVal;
 	  }
 
 	  private void checkLoggedIn() throws NotLoggedInException {

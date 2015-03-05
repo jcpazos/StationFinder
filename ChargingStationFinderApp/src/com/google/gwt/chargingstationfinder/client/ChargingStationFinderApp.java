@@ -104,6 +104,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
     private void loadStationFinderApp() {
+    	
+    	initializeStations();
     	// Set up sign out hyperlink.
 	    signOutLink.setHref(loginInfo.getLogoutUrl());
 	    mainPanel.add(signOutLink);
@@ -114,30 +116,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	    // Assemble Add Address panel.
 	    addPanel.add(newSymbolTextBox);
 	    addPanel.add(addAddressButton);
-	    try {
-			stationService.checkIsAdmin(new AsyncCallback<Void>(){
-
-				@Override
-				public void onFailure(Throwable caught) {
-					caught.getMessage();
-					
-				}
-
-				@Override
-				public void onSuccess(Void result) {
-					addPanel.add(addStationsButton);
-			    	//Unfortunately GWT has two classes ClickHandler that do very different things
-			    	addStationsButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
-
-						@Override
-						public void onClick(ClickEvent event) {
-							parser.run(stations);
-						}
-				  });}
-				});
-		} catch (NotAdminException e) {
-			//do nothing, user is not an admin
-		} 
+	    
+	    initializeAddStationsButton(); 
 	    
 
 	    // Assemble Main panel.
@@ -153,6 +133,53 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 		loadMap();
     }
+
+	private void initializeAddStationsButton() {
+		try {
+			stationService.checkIsAdmin(new AsyncCallback<Void>(){
+
+				@Override
+				public void onFailure(Throwable caught) {
+					caught.getMessage();
+					
+				}
+
+				@Override
+				public void onSuccess(Void result) {
+					mainPanel.add(addStationsButton);
+			    	//Unfortunately GWT has two classes ClickHandler that do very different things
+			    	addStationsButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+
+						@Override
+						public void onClick(ClickEvent event) {
+							parser.run(stations);
+						}
+				  });}
+				});
+		} catch (NotAdminException e) {
+			//do nothing, user is not an admin
+		}
+	}
+
+	private void initializeStations() {
+		stationService.getStations(new AsyncCallback<String[][]>(){
+
+			@Override
+			public void onFailure(Throwable caught) {
+				return;
+				
+			}
+
+			@Override
+			public void onSuccess(String[][] result) {
+				if (result != null) {
+					stations = result;
+					logger.log(Level.SEVERE, stations[15][0]);
+					displayStations(); 
+				}
+				
+			}});
+	}
 
 	private void loadMap() {
 		
@@ -197,12 +224,20 @@ public class ChargingStationFinderApp implements EntryPoint {
 			});
 		}
 
-
+    private void displayStations() {
+    	int i =0;
+    	for (String[] s: stations) {
+    	    logger.log(Level.SEVERE, "i is" + i);
+    		displayStation(s);
+    		i++;
+    	}
+    }
+	
 	private void displayStation(String[] s) {
 		LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
 		
 		InfoWindowOptions windowOptions = InfoWindowOptions.create();
-		windowOptions.setContent(s[2] + "\r\n" + s[3]);
+		windowOptions.setContent(s[2] + "\r\n," + s[3]);
 		final InfoWindow iw = InfoWindow.create(windowOptions);
 		
 		MarkerOptions markerOptions = MarkerOptions.create();
@@ -242,7 +277,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		logger.log(Level.SEVERE, "no");
 	    Window.alert(error.getMessage());
 	    if (error instanceof NotLoggedInException) {
-	      //Window.Location.replace(loginInfo.getLogoutUrl());
+	      Window.Location.replace(loginInfo.getLogoutUrl());
 	    }
 	  }
 }
