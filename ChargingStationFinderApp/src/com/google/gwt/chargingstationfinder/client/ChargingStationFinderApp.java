@@ -17,6 +17,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FormPanel;
@@ -151,7 +152,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 						@Override
 						public void onClick(ClickEvent event) {
-							parser.run(stations);
+							parser.run(stations, "parsed/stations.txt");
 						}
 				  });}
 				});
@@ -173,7 +174,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onSuccess(String[][] result) {
 				if (result != null) {
 					stations = result;
-					logger.log(Level.SEVERE, stations[15][0]);
 					displayStations(); 
 				}
 				
@@ -254,10 +254,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void displayMap(FormPanel formPanel) {
-		formPanel.setWidth("800px");
-	    formPanel.setHeight("950px");
+		formPanel.setWidth("500px");
+	    formPanel.setHeight("650px");
 
-	    RootPanel.get("mapDisplay").add(formPanel);
+	    RootPanel.get().add(formPanel);
 
 	    MapOptions options = MapOptions.create();
 

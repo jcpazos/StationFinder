@@ -27,8 +27,8 @@ public class CSVParser {
 
 	private String[][] stations;
 	final static String myURL = "http://pastebin.com/raw.php?i=Re1qJKj3";
-	final static String fileLoc = "parsed/stations.txt"; 
-	private Logger logger = Logger.getLogger(CSVParser.class.getName());
+	//final static String fileLoc = "parsed/stations.txt"; 
+	//private Logger logger = Logger.getLogger(CSVParser.class.getName());
 	ChargingStationFinderApp app;
 	
 	public CSVParser(ChargingStationFinderApp app) {
@@ -36,14 +36,14 @@ public class CSVParser {
 		this.app = app;
 	}
 	
-	public void run(String[][] stations) {
+	public void run(String[][] stations, String fileLoc) {
 		try { 
-			sendRequest();
+			sendRequest(fileLoc);
 		} catch (RequestException e) {
-			logger.log(Level.SEVERE, e.getMessage());
+			//logger.log(Level.SEVERE, e.getMessage());
 		}
 	}
-	private void sendRequest() throws RequestException {
+	private void sendRequest(String fileLoc) throws RequestException {
 		Request r = new RequestBuilder(RequestBuilder.GET, fileLoc).sendRequest("", new RequestCallback() {
 			@Override
 			public void onResponseReceived(Request req, Response resp) {
@@ -65,7 +65,7 @@ public class CSVParser {
 
 			@Override
 			public void onError(Request res, Throwable throwable) {
-				logger.log(Level.SEVERE, throwable.getMessage());
+				//logger.log(Level.SEVERE, throwable.getMessage());
 			}
 		});
 	}

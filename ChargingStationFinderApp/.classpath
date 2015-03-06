@@ -5,11 +5,6 @@
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
 	<classpathentry kind="con" path="com.google.gwt.eclipse.core.GWT_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-<<<<<<< HEAD
-	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-servlet.jar"/>
-	<classpathentry kind="lib" path="libs/gwt-maps.jar"/>
-=======
 	<classpathentry kind="lib" path="gwt-maps.jar"/>
->>>>>>> c35c7c1e57e8c8c1a46b69440a0c17303328d231
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
