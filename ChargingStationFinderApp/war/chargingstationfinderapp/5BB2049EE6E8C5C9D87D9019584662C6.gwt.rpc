@@ -1,4 +1,3 @@
-@FinalFields, false
 com.google.gwt.chargingstationfinder.client.LoginInfo, true, true, false, false, com.google.gwt.chargingstationfinder.client.LoginInfo/2646273441, 2646273441
 com.google.gwt.chargingstationfinder.client.LoginService, false, false, false, false, _, 15708072
 com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException, true, true, true, true, com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException/3936916533, 3936916533

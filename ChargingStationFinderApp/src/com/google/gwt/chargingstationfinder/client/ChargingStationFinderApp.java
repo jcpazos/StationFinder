@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.maps.gwt.client.Geocoder;
 import com.google.maps.gwt.client.GoogleMap;
 import com.google.maps.gwt.client.InfoWindow;
 import com.google.maps.gwt.client.InfoWindowOptions;
@@ -67,6 +68,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 		      "Please sign in to your Google Account to access the StationFinder application.");
 	private VerticalPanel loginPanel = new VerticalPanel();
 	private CSVParser parser = new CSVParser(this);
+	private TextBox inputBox = new TextBox();
+	private DialogBox dialogInputBox = new DialogBox();
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
@@ -111,7 +114,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 	    signOutLink.setHref(loginInfo.getLogoutUrl());
 	    mainPanel.add(signOutLink);
 	    
-	    
 	    addressFlexTable.setText(0, 0, "Address");
 
 	    // Assemble Add Address panel.
@@ -152,7 +154,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 						@Override
 						public void onClick(ClickEvent event) {
-							parser.run(stations, "parsed/stations.txt");
+							requestParsingInput();
 						}
 				  });}
 				});
@@ -179,15 +181,31 @@ public class ChargingStationFinderApp implements EntryPoint {
 				
 			}});
 	}
+	
+	private void requestParsingInput() {
+	     Button okButton = new Button("Ok");
+	     final Label l = new Label("Text");
+	     inputBox.setText("Enter input address");
+	     
+	     VerticalPanel vPanel = new VerticalPanel();
+         vPanel.add(inputBox);
+         vPanel.add(okButton);
+         dialogInputBox.setWidget(vPanel);
+         dialogInputBox.center();
+         dialogInputBox.show();
+	     okButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				l.setText(inputBox.getText());
+				parser.run(stations, inputBox.getText());
+				dialogInputBox.hide();
+				
+			}});
+	}
 
 	private void loadMap() {
-		
-		
-		
 		formPanel = new FormPanel();
 		Geolocation geoLocation = Geolocation.getIfSupported();
-		
-		userPosition = LatLng.create(49.259909, -123.162542);
 		
 		geoLocation.getCurrentPosition(new Callback<Position,PositionError>() {
 			
@@ -199,10 +217,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onSuccess(Position result) {
 				userPosition = LatLng.create(result.getCoordinates().getLatitude(),
 						result.getCoordinates().getLongitude());
+				logger.log(Level.SEVERE, "found user position" + userPosition.toString());
+				displayMap(formPanel);
 				
 			}});
-		
-		displayMap(formPanel);
 	}
 	
 	protected void addStations(String[][] stations) {

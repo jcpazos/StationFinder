@@ -1,4 +1,3 @@
-@FinalFields, false
 com.google.gwt.chargingstationfinder.client.NotAdminException, true, true, false, false, com.google.gwt.chargingstationfinder.client.NotAdminException/3887236195, 3887236195
 com.google.gwt.chargingstationfinder.client.NotLoggedInException, true, true, false, false, com.google.gwt.chargingstationfinder.client.NotLoggedInException/679749103, 679749103
 com.google.gwt.chargingstationfinder.client.StationService, false, false, false, false, _, 419890266
