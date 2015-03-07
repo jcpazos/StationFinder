@@ -8,6 +8,7 @@ import com.google.gwt.chargingstationfinder.server.Station;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.geolocation.client.Geolocation;
@@ -29,6 +30,8 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.maps.gwt.client.Geocoder;
 import com.google.maps.gwt.client.GeocoderRequest;
+import com.google.maps.gwt.client.GeocoderResult;
+import com.google.maps.gwt.client.GeocoderStatus;
 import com.google.maps.gwt.client.GoogleMap;
 import com.google.maps.gwt.client.InfoWindow;
 import com.google.maps.gwt.client.InfoWindowOptions;
@@ -133,7 +136,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 		controlPanel.add(addPanel);
 		controlPanel.add(lastUpdatedLabel);
 		initializeAddStationsButton(); 
-
 		controlPanel.addStyleName("control");
 
 		infoPanel.setText(0,0,"Address:");
@@ -155,6 +157,33 @@ public class ChargingStationFinderApp implements EntryPoint {
 		newSymbolTextBox.setFocus(true);	    
 
 		loadMap();
+    }
+    
+    private void initializeaddNewSymbolTextBox() {
+    	 addAddressButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler(){
+
+ 			@Override
+ 			public void onClick(ClickEvent event) {
+ 				String text = newSymbolTextBox.getText();
+ 				Geocoder gcc = Geocoder.create();
+ 				final GeocoderRequest gcr = GeocoderRequest.create();
+ 				gcr.setAddress(text);
+ 				gcc.geocode(gcr, new Geocoder.Callback() {
+					
+					@Override
+					public void handle(JsArray<GeocoderResult> a, GeocoderStatus b) {
+						GeocoderResult result = a.get(0);
+						LatLng myLatLng = result.getGeometry().getLocation();
+						MarkerOptions mo = MarkerOptions.create();
+						mo.setPosition(myLatLng);
+						Marker m = Marker.create(mo);
+						m.setMap(gMap);
+						
+					}
+				});
+ 				
+ 			}});	
+    	
     }
 
 	private void initializeAddStationsButton() {
@@ -314,6 +343,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 	    gMap = GoogleMap.create(mapPanel.getElement(), options);
 	    gMap.setCenter(this.userPosition);
+	    initializeaddNewSymbolTextBox();
+	    logger.log(Level.SEVERE, "yes");
 	}
 	
 	private void handleError(Throwable error) {
