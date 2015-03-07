@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -67,6 +68,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 		      "Please sign in to your Google Account to access the StationFinder application.");
 	private VerticalPanel loginPanel = new VerticalPanel();
 	private CSVParser parser = new CSVParser(this);
+	
+	private FlowPanel mapPanel = new FlowPanel();
+	private VerticalPanel controlPanel = new VerticalPanel();
+	private FlexTable infoPanel = new FlexTable();
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
@@ -101,35 +106,47 @@ public class ChargingStationFinderApp implements EntryPoint {
 		signInLink.setHref(loginInfo.getLoginUrl());
 		loginPanel.add(loginLabel);
 		loginPanel.add(signInLink);
-		RootPanel.get("stationList").add(loginPanel);
+		RootPanel.get().add(loginPanel);
 	}
 
     private void loadStationFinderApp() {
     	
     	initializeStations();
-    	// Set up sign out hyperlink.
-	    signOutLink.setHref(loginInfo.getLogoutUrl());
-	    mainPanel.add(signOutLink);
-	    
-	    
-	    addressFlexTable.setText(0, 0, "Address");
+		// Set up sign out hyperlink.
+		signOutLink.setHref(loginInfo.getLogoutUrl());
+		signOutLink.addStyleName("signOut");
 
-	    // Assemble Add Address panel.
-	    addPanel.add(newSymbolTextBox);
-	    addPanel.add(addAddressButton);
-	    
-	    initializeAddStationsButton(); 
+		// Assemble Add Address panel.
+		newSymbolTextBox.addStyleName("inputBox");
+		newSymbolTextBox.getElement().setPropertyString("placeholder", "Enter Address Here");
+		addPanel.add(newSymbolTextBox);
+		addPanel.add(addAddressButton);
+		addPanel.addStyleName("addressInput");
 
-	    // Assemble Main panel.
-	    mainPanel.add(addressFlexTable);
-	    mainPanel.add(addPanel);
-	    mainPanel.add(lastUpdatedLabel);
+		// Assemble control panel.
+		controlPanel.add(addPanel);
+		controlPanel.add(lastUpdatedLabel);
+		initializeAddStationsButton(); 
 
-	    // Associate the Main panel with the HTML host page.
-	    RootPanel.get("Address").add(mainPanel);
+		controlPanel.addStyleName("control");
 
-	    // Move cursor focus to the input box.
-	    newSymbolTextBox.setFocus(true);	    
+		infoPanel.setText(0,0,"Address:");
+		infoPanel.setText(1,0,"Operator:");
+		infoPanel.setText(2,0,"Rating:");
+
+
+		infoPanel.addStyleName("info");
+		infoPanel.getCellFormatter().addStyleName(0, 0, "address");
+		infoPanel.getCellFormatter().addStyleName(1, 0, "operator");
+		infoPanel.getCellFormatter().addStyleName(2, 0, "rating");
+
+		RootPanel.get().add(signOutLink);
+		RootPanel.get("control").add(controlPanel);
+		RootPanel.get("info").add(infoPanel);
+		RootPanel.get().addStyleName("background");
+
+		// Move cursor focus to the input box.
+		newSymbolTextBox.setFocus(true);	    
 
 		loadMap();
     }
@@ -146,7 +163,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 				@Override
 				public void onSuccess(Void result) {
-					mainPanel.add(addStationsButton);
+					addStationsButton.addStyleName("adminButton");
+					controlPanel.insert(addStationsButton, 0);
 			    	//Unfortunately GWT has two classes ClickHandler that do very different things
 			    	addStationsButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 
@@ -181,10 +199,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void loadMap() {
-		
-		
-		
-		formPanel = new FormPanel();
+
+		mapPanel.addStyleName("map");
 		Geolocation geoLocation = Geolocation.getIfSupported();
 		
 		userPosition = LatLng.create(49.259909, -123.162542);
@@ -234,6 +250,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	
 	private void displayStation(String[] s) {
 		LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
+		final String address = s[2];
+		final String operator = s[3];
 		
 		InfoWindowOptions windowOptions = InfoWindowOptions.create();
 		windowOptions.setContent(s[2] + "\r\n," + s[3]);
@@ -249,26 +267,25 @@ public class ChargingStationFinderApp implements EntryPoint {
 			@Override
 			public void handle(MouseEvent event) {
 				iw.open(gMap, m);
-				
+				infoPanel.setText(0, 0, address);
+				infoPanel.setText(1, 0, operator);
 			}});
 	}
 
 	private void displayMap(FormPanel formPanel) {
-		formPanel.setWidth("500px");
-	    formPanel.setHeight("650px");
 
-	    RootPanel.get().add(formPanel);
+	    RootPanel.get("map").add(mapPanel);
 
 	    MapOptions options = MapOptions.create();
 
-	    options.setZoom(6);
+	    options.setZoom(12);
 	    options.setMapTypeId(MapTypeId.ROADMAP);
 	    options.setDraggable(true);
 	    options.setMapTypeControl(true);
 	    options.setScaleControl(true);
 	    options.setScrollwheel(true);	
 
-	    gMap = GoogleMap.create(formPanel.getElement(), options);
+	    gMap = GoogleMap.create(mapPanel.getElement(), options);
 	    gMap.setCenter(this.userPosition);
 	}
 	
