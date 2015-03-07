@@ -3,12 +3,18 @@
 
 /** Example rules used by the template application (remove for your app) */
 h1 {
-  font-size: 2em;
+  font-size: 5em;
   font-weight: bold;
-  color: #777777;
-  margin: 40px 0px 70px;
-  text-align: center;
+  color: white;
+  margin: 15px;
+  text-align: left;
+  font-family: Arial, sans-serif, serif;
+  text-shadow: 2px 2px black;
 }
+
+/* body {
+	background-color: #6495ed;
+} */
 
 .sendButton {
   display: block;
@@ -33,3 +39,98 @@ h1 {
   margin: 15px 6px 6px;
 }
 
+
+.map {
+	position: absolute;
+	right: 0px;
+	bottom: 0px;
+	height: 82%;
+	width: 80%;
+	border-style: solid;
+	border-width: medium;
+}
+
+.signOut {
+	position: absolute;
+	right: 2px;
+	top: 0px;
+	color: white !important;
+}
+
+.control {
+	position: absolute;
+	right: 10px;
+	top: 3%;
+	width: 30%;
+	height: 13%;
+}
+
+.addressInput {
+	position: absolute;
+	bottom: 0%;
+	right: 5%;
+	width: 100%;
+	margin: 5px;
+}
+
+.inputBox {
+	width:100%;
+}
+
+.background {
+	background-image: url("images/background.jpg");
+}
+
+.info {
+	position: absolute;
+	left: 0px;
+	bottom: 0px;
+	height: 83%;
+	width: 20%;
+	border: medium solid black;
+}
+
+.address {
+	font-family: Arial, sans-serif, serif;
+	font-weight: bold;
+	/* text-align: top left; */
+	border: 2px solid black;
+	height: 20%;
+	background-color: white;
+	opacity: 0.4;
+	filter: alpha(opacity=60);
+	margin-top: 0px !important;
+}
+
+.operator {
+	font-family: Arial, sans-serif, serif;
+	font-weight: bold;
+	
+	border: medium solid black;
+	height: 20%;
+	background-color: white;
+	opacity: 0.4;
+	filter: alpha(opacity=60);
+}
+
+.rating {
+	font-family: Arial, sans-serif, serif;
+	font-weight: bold;
+	
+	border: medium solid black;
+	background-color: white;
+	opacity: 0.4;
+	filter: alpha(opacity=60);
+}
+
+.adminButton {
+	/* position: absolute;
+	right: 5%;
+	top: 3%; */
+	margin: 5px;
+	position: absolute;
+	right: 16.5%;
+	top: 0%;
+}
+
+}
