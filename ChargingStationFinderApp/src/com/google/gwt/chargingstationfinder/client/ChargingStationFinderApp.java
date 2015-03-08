@@ -137,7 +137,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 		controlPanel.add(addPanel);
 		controlPanel.add(lastUpdatedLabel);
 		initializeAddStationsButton(); 
-
 		controlPanel.addStyleName("control");
 
 		infoPanel.setText(0,0,"Address:");
