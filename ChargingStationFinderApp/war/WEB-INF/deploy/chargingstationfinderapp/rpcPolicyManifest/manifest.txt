@@ -1,4 +1,5 @@
 # Module chargingstationfinderapp
 # RPC service class, partial path of RPC policy file
+com.google.gwt.chargingstationfinder.client.ParsingService, 9B54CB828769414D05E4F7C5ED9506BE.gwt.rpc
 com.google.gwt.chargingstationfinder.client.StationService, CC224B7F07CAF61B6806183BEB5000F9.gwt.rpc
 com.google.gwt.chargingstationfinder.client.LoginService, 5BB2049EE6E8C5C9D87D9019584662C6.gwt.rpc

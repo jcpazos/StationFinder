@@ -25,7 +25,7 @@ import com.google.maps.gwt.client.LatLng;
 public class StationServiceImpl extends RemoteServiceServlet implements
 StationService {
 	
-	//private Logger logger = Logger.getLogger(StationServiceImpl.class.getName());
+	private Logger logger = Logger.getLogger(StationServiceImpl.class.getName());
 	  private static final PersistenceManagerFactory PMF =
 	      JDOHelper.getPersistenceManagerFactory("transactions-optional");
 
@@ -56,7 +56,7 @@ StationService {
 	        }
 	      }
 	      if (deleteCount != 1) {
-	        //logger.log(Level.WARNING, "removeStock deleted "+deleteCount+" Stocks");
+	        logger.log(Level.WARNING, "removeStock deleted "+deleteCount+" Stocks");
 	      }
 	    } finally {
 	      pm.close();

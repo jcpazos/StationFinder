@@ -31,6 +31,19 @@
     <servlet-name>loginService</servlet-name>
     <url-pattern>/chargingstationfinderapp/login</url-pattern>
   </servlet-mapping>
+  
+    
+  <servlet>
+    <servlet-name>parsingService</servlet-name>
+    <servlet-class>com.google.gwt.chargingstationfinder.server.ParsingServiceImpl</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>parsingService</servlet-name>
+    <url-pattern>/chargingstationfinderapp/parser</url-pattern>
+  </servlet-mapping>
+  
+  
 
 
 </web-app>

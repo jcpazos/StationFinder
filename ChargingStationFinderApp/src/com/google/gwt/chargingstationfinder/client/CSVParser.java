@@ -6,6 +6,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,22 +17,24 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.xml.sax.InputSource;
+
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
-import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 
 
 
 public class CSVParser {
 
 	private String[][] stations;
-	final static String myURL = "http://pastebin.com/raw.php?i=Re1qJKj3";
+	final static String myURL = "http://pastebin.com/raw.php?i=KvKTX3gA";
 	//final static String fileLoc = "parsed/stations.txt"; 
-	//private Logger logger = Logger.getLogger(CSVParser.class.getName());
+	private Logger logger = Logger.getLogger(CSVParser.class.getName());
 	ChargingStationFinderApp app;
 	
 	public CSVParser(ChargingStationFinderApp app) {
@@ -37,36 +43,47 @@ public class CSVParser {
 	}
 	
 	public void run(String[][] stations, String fileLoc) {
-		try { 
+		try {
 			sendRequest(fileLoc);
 		} catch (RequestException e) {
 			//logger.log(Level.SEVERE, e.getMessage());
 		}
 	}
-	private void sendRequest(String fileLoc) throws RequestException {
-		Request r = new RequestBuilder(RequestBuilder.GET, fileLoc).sendRequest("", new RequestCallback() {
+	private void sendRequest(String fileLoc) throws RequestException{
+		
+		RequestBuilder rb = new RequestBuilder(RequestBuilder.GET, fileLoc);
+		Request r= rb.sendRequest("", new RequestCallback() {
 			@Override
 			public void onResponseReceived(Request req, Response resp) {
-				String text = resp.getText();
-				String[] splitArray = text.split("\\r?\\n");
-				ArrayList<String> splitStations = new ArrayList<String>(Arrays.asList(splitArray));
-				splitStations.remove(0);
-				int i = 0;
-				for (String s: splitStations) {
-					String[] station = s.split(",");
-					for (int j=0; j<4;j++) {
-						stations[i][j] = station[j];
-					}
-					app.addStation(stations[i]);
-					i++;
+				if (resp.getStatusCode() == 200) {	
+					parseData(resp.getText());
+				}  else {
+					logger.log(Level.SEVERE, "HTTP error code " + 
+							resp.getStatusCode() + ":" + 
+							resp.getStatusText());
 				}
-				app.addStations(stations);
 			}
 
 			@Override
 			public void onError(Request res, Throwable throwable) {
-				//logger.log(Level.SEVERE, throwable.getMessage());
+				logger.log(Level.SEVERE, throwable.getMessage());
 			}
 		});
+	}
+	
+	private void parseData(String text) {
+		String[] splitArray = text.split("\\r?\\n");
+		ArrayList<String> splitStations = new ArrayList<String>(Arrays.asList(splitArray));
+		splitStations.remove(0);
+		int i = 0;
+		for (String s: splitStations) {
+			String[] station = s.split(",");
+			for (int j=0; j<4;j++) {
+				stations[i][j] = station[j];
+			}
+			app.addStation(stations[i]);
+			i++;
+		}
+		app.addStations(stations);
 	}
 }
