@@ -1,51 +1,47 @@
 package com.google.gwt.chargingstationfinder.client;
 
-import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.chargingstationfinder.server.Station;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.geolocation.client.Geolocation;
 import com.google.gwt.geolocation.client.Position;
 import com.google.gwt.geolocation.client.PositionError;
-import com.google.gwt.http.client.RequestException;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.maps.gwt.client.DirectionsRenderer;
+import com.google.maps.gwt.client.DirectionsRequest;
+import com.google.maps.gwt.client.DirectionsResult;
+import com.google.maps.gwt.client.DirectionsService;
+import com.google.maps.gwt.client.DirectionsStatus;
 import com.google.maps.gwt.client.Geocoder;
-import com.google.maps.gwt.client.GeocoderAddressComponent;
 import com.google.maps.gwt.client.GeocoderRequest;
 import com.google.maps.gwt.client.GeocoderResult;
 import com.google.maps.gwt.client.GeocoderStatus;
 import com.google.maps.gwt.client.GoogleMap;
-import com.google.maps.gwt.client.InfoWindow;
-import com.google.maps.gwt.client.InfoWindowOptions;
 import com.google.maps.gwt.client.LatLng;
 import com.google.maps.gwt.client.MapOptions;
 import com.google.maps.gwt.client.MapTypeId;
-import com.google.maps.gwt.client.KmlLayer;
 import com.google.maps.gwt.client.Marker;
 import com.google.maps.gwt.client.Marker.ClickHandler;
 import com.google.maps.gwt.client.MarkerOptions;
 import com.google.maps.gwt.client.MouseEvent;
-import com.google.gwt.user.client.ui.Label;
+import com.google.maps.gwt.client.TravelMode;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -82,6 +78,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private VerticalPanel controlPanel = new VerticalPanel();
 	private FlexTable infoPanel = new FlexTable();
 	private Marker userMarker = Marker.create();
+	private DirectionsRenderer rend = DirectionsRenderer.create();
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
@@ -274,6 +271,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				displayMap(formPanel);
 				userMarker.setPosition(userPosition);
 				userMarker.setMap(gMap);
+			    showRoute();
 			}
 		});
 	}
@@ -370,6 +368,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	    gMap.setCenter(this.userPosition);
 	    initializeStations();
 	    initializeaddNewSymbolTextBox();
+	    rend.setMap(gMap);
 	}
 	
 	private void handleError(Throwable error) {
@@ -378,4 +377,31 @@ public class ChargingStationFinderApp implements EntryPoint {
 	      Window.Location.replace(loginInfo.getLogoutUrl());
 	    }
 	  }
+	
+	private void showRoute() {
+		
+		
+		LatLng destination = LatLng.create(49.2635849, -123.1390883);
+		//LatLng origin = LatLng.create(49.2583537,-123.2156563);
+		DirectionsRequest req = DirectionsRequest.create();
+		req.setOrigin(userPosition);
+		req.setDestination(destination);
+		req.setTravelMode(TravelMode.DRIVING);
+		
+		DirectionsService serv = DirectionsService.create();
+		
+		serv.route(req, new DirectionsService.Callback() {
+
+			@Override
+			public void handle(DirectionsResult result, DirectionsStatus status) {
+				// TODO Auto-generated method stub	
+				if(status == DirectionsStatus.OK)
+					rend.setDirections(result);
+			}
+		});
+
+		
+		
+		
+	}
 }
