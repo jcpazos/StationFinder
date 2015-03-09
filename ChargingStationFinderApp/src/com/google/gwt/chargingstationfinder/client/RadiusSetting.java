@@ -11,7 +11,7 @@ public enum RadiusSetting {
     RadiusSetting(double radius) {
         this.radius = radius;
     }
-    private double radius() {
+    public double radius() {
     	return radius;
     }
 }
