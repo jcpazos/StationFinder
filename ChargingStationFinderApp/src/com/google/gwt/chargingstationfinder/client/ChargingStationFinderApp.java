@@ -39,6 +39,7 @@ import com.google.maps.gwt.client.MapOptions;
 import com.google.maps.gwt.client.MapTypeId;
 import com.google.maps.gwt.client.Marker;
 import com.google.maps.gwt.client.Marker.ClickHandler;
+import com.google.maps.gwt.client.MarkerImage;
 import com.google.maps.gwt.client.MarkerOptions;
 import com.google.maps.gwt.client.MouseEvent;
 import com.google.maps.gwt.client.TravelMode;
@@ -77,6 +78,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private FlexTable infoPanel = new FlexTable();
 	private Marker userMarker = Marker.create();
 	private DirectionsRenderer rend = DirectionsRenderer.create();
+	
+	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.png");
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
@@ -270,6 +273,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				displayMap(formPanel);
 				MarkerOptions option = MarkerOptions.create();
 				option.setPosition(userPosition);
+				option.setIcon(BLUE_MARKER);
 				Marker marker = Marker.create(option);
 				marker.setMap(gMap);
 			}
@@ -333,7 +337,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void displayStation(String[] s) {
-		LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
+		final LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
 		final String address = s[2];
 		final String operator = s[3];
 
@@ -345,6 +349,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			@Override
 			public void handle(MouseEvent event) {
+				showRoute(position);
 				infoPanel.setText(0, 0, address);
 				infoPanel.setText(1, 0, operator);
 			}});
@@ -371,17 +376,18 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void handleError(Throwable error) {
-		Window.alert(error.getMessage());
-		if (error instanceof NotLoggedInException) {
-			Window.Location.replace(loginInfo.getLogoutUrl());
-		}
-	}
 
-	private void showRoute(LatLng nearestStation) {
-
+	    Window.alert(error.getMessage());
+	    if (error instanceof NotLoggedInException) {
+	      Window.Location.replace(loginInfo.getLogoutUrl());
+	    }
+	  }
+	
+	private void showRoute(LatLng dest) {
+		
 		DirectionsRequest req = DirectionsRequest.create();
 		req.setOrigin(userPosition);
-		req.setDestination(nearestStation);
+		req.setDestination(dest);
 		req.setTravelMode(TravelMode.DRIVING);
 
 		DirectionsService serv = DirectionsService.create();
