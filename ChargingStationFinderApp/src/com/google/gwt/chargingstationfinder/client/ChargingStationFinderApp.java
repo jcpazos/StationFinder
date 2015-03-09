@@ -121,7 +121,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 
     private void loadStationFinderApp() {
     	
-    	initializeStations();
 		// Set up sign out hyperlink.
 		signOutLink.setHref(loginInfo.getLogoutUrl());
 		signOutLink.addStyleName("signOut");
@@ -272,7 +271,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onSuccess(Position result) {
 				userPosition = LatLng.create(result.getCoordinates().getLatitude(),
 						result.getCoordinates().getLongitude());
-				logger.log(Level.SEVERE, "found user position" + userPosition.toString());
 				displayMap(formPanel);
 				userMarker.setPosition(userPosition);
 				userMarker.setMap(gMap);
@@ -299,9 +297,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 						GeocoderResult result = a.get(0);
 						LatLng myLatLng = result.getGeometry().getLocation();
 						userMarker.setPosition(myLatLng);
-						
-						/*userMarker = Marker.create(userMarkerOptions);
-						userMarker.setMap(gMap);*/
 						
 					}
 				});
@@ -335,7 +330,6 @@ public class ChargingStationFinderApp implements EntryPoint {
     private void displayStations() {
     	int i =0;
     	for (String[] s: stations) {
-    	    logger.log(Level.SEVERE, "i is" + i);
     		displayStation(s);
     		i++;
     	}
@@ -349,7 +343,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 		final MarkerOptions markerOptions = MarkerOptions.create();
 		markerOptions.setPosition(position);
 		final Marker m = Marker.create(markerOptions);
-		
 		m.setMap(gMap);
 		m.addClickListener(new ClickHandler(){
 
@@ -375,11 +368,11 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 	    gMap = GoogleMap.create(mapPanel.getElement(), options);
 	    gMap.setCenter(this.userPosition);
+	    initializeStations();
 	    initializeaddNewSymbolTextBox();
 	}
 	
 	private void handleError(Throwable error) {
-		logger.log(Level.SEVERE, "no");
 	    Window.alert(error.getMessage());
 	    if (error instanceof NotLoggedInException) {
 	      Window.Location.replace(loginInfo.getLogoutUrl());
