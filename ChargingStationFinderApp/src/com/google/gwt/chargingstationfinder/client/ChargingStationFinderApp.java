@@ -271,7 +271,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				displayMap(formPanel);
 				userMarker.setPosition(userPosition);
 				userMarker.setMap(gMap);
-			    showRoute();
+			    //showRoute();
 			}
 		});
 	}
@@ -334,7 +334,7 @@ public class ChargingStationFinderApp implements EntryPoint {
     }
 	
 	private void displayStation(String[] s) {
-		LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
+		final LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
 		final String address = s[2];
 		final String operator = s[3];
 		
@@ -346,6 +346,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			@Override
 			public void handle(MouseEvent event) {
+				showRoute(position);
 				infoPanel.setText(0, 0, address);
 				infoPanel.setText(1, 0, operator);
 			}});
@@ -378,10 +379,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 	    }
 	  }
 	
-	private void showRoute() {
+	private void showRoute(LatLng latlng) {
 		
 		
-		LatLng destination = LatLng.create(49.2635849, -123.1390883);
+		LatLng destination = latlng;
 		//LatLng origin = LatLng.create(49.2583537,-123.2156563);
 		DirectionsRequest req = DirectionsRequest.create();
 		req.setOrigin(userPosition);
