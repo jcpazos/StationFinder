@@ -39,6 +39,8 @@ import com.google.maps.gwt.client.MapOptions;
 import com.google.maps.gwt.client.MapTypeId;
 import com.google.maps.gwt.client.Marker;
 import com.google.maps.gwt.client.Marker.ClickHandler;
+import com.google.maps.gwt.client.geometry.Spherical;
+import com.google.maps.gwt.client.MarkerImage;
 import com.google.maps.gwt.client.MarkerOptions;
 import com.google.maps.gwt.client.MouseEvent;
 import com.google.maps.gwt.client.TravelMode;
@@ -47,7 +49,7 @@ import com.google.maps.gwt.client.TravelMode;
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class ChargingStationFinderApp implements EntryPoint {
-	
+
 	private LatLng userPosition;
 	private String[][] stations;
 	private GoogleMap gMap;
@@ -58,27 +60,28 @@ public class ChargingStationFinderApp implements EntryPoint {
 			+ "connection and try again.";
 	private final StationServiceAsync stationService = GWT.create(StationService.class);
 	private final ParsingServiceAsync parsingService = GWT.create(ParsingService.class);
-	private VerticalPanel mainPanel = new VerticalPanel();
-	private FlexTable addressFlexTable = new FlexTable();
 	private HorizontalPanel addPanel = new HorizontalPanel();
 	private TextBox newSymbolTextBox = new TextBox();
-	private Button addAddressButton = new Button("Add");
+	private TextBox nearestStationTextBox = new TextBox();
+	private Button addAddressButton = new Button("Find Nearest Station");
 	private Button addStationsButton = new Button("AddStations");
 	private Label lastUpdatedLabel = new Label();
 	private Anchor signInLink = new Anchor("Sign In");
 	private Anchor signOutLink = new Anchor("Sign Out");
 	private LoginInfo loginInfo = null;
 	private Label loginLabel = new Label(
-		      "Please sign in to your Google Account to access the StationFinder application.");
+			"Please sign in to your Google Account to access the StationFinder application.");
 	private VerticalPanel loginPanel = new VerticalPanel();
 	private TextBox inputBox = new TextBox();
 	private DialogBox dialogInputBox = new DialogBox();
-	
+
 	private FlowPanel mapPanel = new FlowPanel();
 	private VerticalPanel controlPanel = new VerticalPanel();
 	private FlexTable infoPanel = new FlexTable();
 	private Marker userMarker = Marker.create();
 	private DirectionsRenderer rend = DirectionsRenderer.create();
+	private Setting setting = new Setting();
+	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.jpg");
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
@@ -88,25 +91,25 @@ public class ChargingStationFinderApp implements EntryPoint {
 	 * This is the entry point method.
 	 */
 	public void onModuleLoad() {
-		
-		// Check login status using login service.
-		  System.out.println("HI");
-		    LoginServiceAsync loginService = GWT.create(LoginService.class);
-		    loginService.login(GWT.getHostPageBaseURL(), new AsyncCallback<LoginInfo>() {
-		      public void onFailure(Throwable error) {
-		    	  handleError(error);
-		      }
 
-		      public void onSuccess(LoginInfo result) {
-		        loginInfo = result;
-		        if(loginInfo.isLoggedIn()) {
-		          loadStationFinderApp();
-		        } else {
-		          loadLogin();
-		        }
-		      }
-		    });
-		  }
+		// Check login status using login service.
+		System.out.println("HI");
+		LoginServiceAsync loginService = GWT.create(LoginService.class);
+		loginService.login(GWT.getHostPageBaseURL(), new AsyncCallback<LoginInfo>() {
+			public void onFailure(Throwable error) {
+				handleError(error);
+			}
+
+			public void onSuccess(LoginInfo result) {
+				loginInfo = result;
+				if(loginInfo.isLoggedIn()) {
+					loadStationFinderApp();
+				} else {
+					loadLogin();
+				}
+			}
+		});
+	}
 
 	protected void loadLogin() {
 		// Assemble login panel.
@@ -116,17 +119,18 @@ public class ChargingStationFinderApp implements EntryPoint {
 		RootPanel.get().add(loginPanel);
 	}
 
-    private void loadStationFinderApp() {
-    	
+	private void loadStationFinderApp() {
+
 		// Set up sign out hyperlink.
 		signOutLink.setHref(loginInfo.getLogoutUrl());
 		signOutLink.addStyleName("signOut");
 
 		// Assemble Add Address panel.
 		newSymbolTextBox.addStyleName("inputBox");
-		newSymbolTextBox.getElement().setPropertyString("placeholder", "Enter Address Here");
+		newSymbolTextBox.getElement().setPropertyString("placeholder", "Enter Postal Code Here");
 		addPanel.add(newSymbolTextBox);
 		addPanel.add(addAddressButton);
+		//addPanel.add(nearestStationTextBox);
 		addPanel.addStyleName("addressInput");
 
 		// Assemble control panel.
@@ -154,7 +158,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		newSymbolTextBox.setFocus(true);	    
 
 		loadMap();
-    }
+	}
 
 	private void initializeAddStationsButton() {
 		try {
@@ -163,22 +167,22 @@ public class ChargingStationFinderApp implements EntryPoint {
 				@Override
 				public void onFailure(Throwable caught) {
 					caught.getMessage();
-					
+
 				}
 
 				@Override
 				public void onSuccess(Void result) {
 					addStationsButton.addStyleName("adminButton");
 					controlPanel.insert(addStationsButton, 0);
-			    	//Unfortunately GWT has two classes ClickHandler that do very different things
-			    	addStationsButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+					//Unfortunately GWT has two classes ClickHandler that do very different things
+					addStationsButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 
 						@Override
 						public void onClick(ClickEvent event) {
 							requestParsingInput();
 						}
-				  });}
-				});
+					});}
+			});
 		} catch (NotAdminException e) {
 			//do nothing, user is not an admin
 		}
@@ -190,7 +194,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			@Override
 			public void onFailure(Throwable caught) {
 				return;
-				
+
 			}
 
 			@Override
@@ -201,19 +205,20 @@ public class ChargingStationFinderApp implements EntryPoint {
 				}
 			}});
 	}
-	
+
 	private void requestParsingInput() {
-	     Button okButton = new Button("Ok");
-	     final Label l = new Label("Text");
-	     inputBox.setText("Enter input address");
-	     
-	     VerticalPanel vPanel = new VerticalPanel();
-         vPanel.add(inputBox);
-         vPanel.add(okButton);
-         dialogInputBox.setWidget(vPanel);
-         dialogInputBox.center();
-         dialogInputBox.show();
-	     okButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+		Button okButton = new Button("Ok");
+		final Label l = new Label("Text");
+		inputBox.getElement().setPropertyString("placeholder", "Enter url Here");
+
+
+		VerticalPanel vPanel = new VerticalPanel();
+		vPanel.add(inputBox);
+		vPanel.add(okButton);
+		dialogInputBox.setWidget(vPanel);
+		dialogInputBox.center();
+		dialogInputBox.show();
+		okButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
 				l.setText(inputBox.getText());
@@ -223,7 +228,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 					@Override
 					public void onFailure(Throwable caught) {
 						logger.log(Level.SEVERE, caught.getMessage());
-						
+
 					}
 
 					@Override
@@ -235,10 +240,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 						addStations(result);
 						displayStations();
 					}});
-				
+
 			}});
 	}
-	
+
 	private void displayInvalidURLBox() {
 		Button okButton = new Button("Ok");
 		final DialogBox  db = new DialogBox();
@@ -257,7 +262,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 		mapPanel.addStyleName("map");
 		Geolocation geoLocation = Geolocation.getIfSupported();
-		
+
 		geoLocation.getCurrentPosition(new Callback<Position,PositionError>() {
 
 			public void onFailure(PositionError reason) {
@@ -269,16 +274,18 @@ public class ChargingStationFinderApp implements EntryPoint {
 				userPosition = LatLng.create(result.getCoordinates().getLatitude(),
 						result.getCoordinates().getLongitude());
 				displayMap(formPanel);
-				userMarker.setPosition(userPosition);
+				MarkerOptions option = MarkerOptions.create();
+				option.setPosition(userPosition);
+				option.setIcon(BLUE_MARKER);
+				userMarker.setOptions(option);
 				userMarker.setMap(gMap);
-			    //showRoute();
 			}
 		});
 	}
-	
-	
+
+
 	private void initializeaddNewSymbolTextBox() {
-   	 addAddressButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler(){
+		addAddressButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler(){
 
 			@Override
 			public void onClick(ClickEvent event) {
@@ -287,22 +294,26 @@ public class ChargingStationFinderApp implements EntryPoint {
 				final GeocoderRequest gcr = GeocoderRequest.create();
 				gcr.setAddress(text);
 				gcc.geocode(gcr, new Geocoder.Callback() {
-					
 
 					@Override
 					public void handle(JsArray<GeocoderResult> a,
 							GeocoderStatus b) {
 						GeocoderResult result = a.get(0);
 						LatLng myLatLng = result.getGeometry().getLocation();
+						userPosition = myLatLng;
 						userMarker.setPosition(myLatLng);
-						
+						try {
+							showRoute(findNearestStation(myLatLng));
+						} catch (NoStationFoundException e) {
+							e.printStackTrace();
+						}
 					}
 				});
-				
+
 			}});	
-   	
-   }
-	
+
+	}
+
 	protected void addStations(String[][] stations) {
 		this.stations = stations;
 		for (int i = 0; i<stations.length;i++) {
@@ -312,32 +323,32 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	protected void addStation(final String[] station) {
-			stationService.addStation(Double.parseDouble(station[0]), 
-					Double.parseDouble(station[1]),station[2], station[3], 
-					new AsyncCallback<Void>() {
-				
-				public void onFailure(Throwable caught) {
-					handleError(caught);
-				}
-				public void onSuccess(Void result) {
-					displayStation(station);
-				}
-			});
-		}
+		stationService.addStation(Double.parseDouble(station[0]), 
+				Double.parseDouble(station[1]),station[2], station[3], 
+				new AsyncCallback<Void>() {
 
-    private void displayStations() {
-    	int i =0;
-    	for (String[] s: stations) {
-    		displayStation(s);
-    		i++;
-    	}
-    }
-	
+			public void onFailure(Throwable caught) {
+				handleError(caught);
+			}
+			public void onSuccess(Void result) {
+				displayStation(station);
+			}
+		});
+	}
+
+	private void displayStations() {
+		int i =0;
+		for (String[] s: stations) {
+			displayStation(s);
+			i++;
+		}
+	}
+
 	private void displayStation(String[] s) {
 		final LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
 		final String address = s[2];
 		final String operator = s[3];
-		
+
 		final MarkerOptions markerOptions = MarkerOptions.create();
 		markerOptions.setPosition(position);
 		final Marker m = Marker.create(markerOptions);
@@ -354,43 +365,41 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 	private void displayMap(FormPanel formPanel) {
 
-	    RootPanel.get("map").add(mapPanel);
+		RootPanel.get("map").add(mapPanel);
 
-	    MapOptions options = MapOptions.create();
+		MapOptions options = MapOptions.create();
 
-	    options.setZoom(12);
-	    options.setMapTypeId(MapTypeId.ROADMAP);
-	    options.setDraggable(true);
-	    options.setMapTypeControl(true);
-	    options.setScaleControl(true);
-	    options.setScrollwheel(true);	
+		options.setZoom(12);
+		options.setMapTypeId(MapTypeId.ROADMAP);
+		options.setDraggable(true);
+		options.setMapTypeControl(true);
+		options.setScaleControl(true);
+		options.setScrollwheel(true);	
 
-	    gMap = GoogleMap.create(mapPanel.getElement(), options);
-	    gMap.setCenter(this.userPosition);
-	    initializeStations();
-	    initializeaddNewSymbolTextBox();
-	    rend.setMap(gMap);
+		gMap = GoogleMap.create(mapPanel.getElement(), options);
+		gMap.setCenter(this.userPosition);
+		initializeStations();
+		initializeaddNewSymbolTextBox();
+		rend.setMap(gMap);
 	}
-	
+
 	private void handleError(Throwable error) {
+
 	    Window.alert(error.getMessage());
 	    if (error instanceof NotLoggedInException) {
 	      Window.Location.replace(loginInfo.getLogoutUrl());
 	    }
 	  }
 	
-	private void showRoute(LatLng latlng) {
+	private void showRoute(LatLng dest) {
 		
-		
-		LatLng destination = latlng;
-		//LatLng origin = LatLng.create(49.2583537,-123.2156563);
 		DirectionsRequest req = DirectionsRequest.create();
 		req.setOrigin(userPosition);
-		req.setDestination(destination);
+		req.setDestination(dest);
 		req.setTravelMode(TravelMode.DRIVING);
-		
+
 		DirectionsService serv = DirectionsService.create();
-		
+
 		serv.route(req, new DirectionsService.Callback() {
 
 			@Override
@@ -400,9 +409,27 @@ public class ChargingStationFinderApp implements EntryPoint {
 					rend.setDirections(result);
 			}
 		});
+	}
+	
+	private LatLng findNearestStation(LatLng from) throws NoStationFoundException {
+		double minDistance = Double.POSITIVE_INFINITY;
+		LatLng nearest = null;
+		for (String[] s : stations) {
+			LatLng to = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
+			double distance = calculateDistance(from, to);
+			if (/*setting .radius.radius() > distance &&*/ distance < minDistance) {
+				nearest = to;
+				minDistance = distance;
+			}
+			/*if (minDistance == 1000000000.00) {
+				throw new NoStationFoundException();
+		}*/
+		}
+		return nearest;
+	}
 
-		
-		
-		
+	private double calculateDistance(LatLng from, LatLng to) {
+		return Math.sqrt(Math.pow(from.lat() - to.lat(), 2)
+				+ Math.pow(from.lng() - to.lng(), 2));
 	}
 }
