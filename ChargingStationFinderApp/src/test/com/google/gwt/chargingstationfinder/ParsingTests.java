@@ -1,4 +1,4 @@
-package com.google.gwt.chargingstationfinder;
+package test.com.google.gwt.chargingstationfinder;
 
 import static org.junit.Assert.*;
 

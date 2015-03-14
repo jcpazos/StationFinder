@@ -81,7 +81,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private Marker userMarker = Marker.create();
 	private DirectionsRenderer rend = DirectionsRenderer.create();
 	private Setting setting = new Setting();
-	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.jpg");
+	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.png");
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
@@ -279,6 +279,21 @@ public class ChargingStationFinderApp implements EntryPoint {
 				option.setIcon(BLUE_MARKER);
 				userMarker.setOptions(option);
 				userMarker.setMap(gMap);
+				
+				gMap.addClickListener(new GoogleMap.ClickHandler(){
+
+					@Override
+					public void handle(MouseEvent event) {
+						userPosition = event.getLatLng();
+						try {
+							showRoute(findNearestStation(userPosition));
+						} catch (NoStationFoundException e) {
+							//there is no station the exception displays a message
+						}
+						
+					}
+					
+				});
 			}
 		});
 	}
@@ -417,13 +432,13 @@ public class ChargingStationFinderApp implements EntryPoint {
 		for (String[] s : stations) {
 			LatLng to = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
 			double distance = calculateDistance(from, to);
-			if (/*setting .radius.radius() > distance &&*/ distance < minDistance) {
+			if (2 > distance && distance < minDistance) {
 				nearest = to;
 				minDistance = distance;
 			}
-			/*if (minDistance == 1000000000.00) {
+			if (minDistance == Double.POSITIVE_INFINITY) {
 				throw new NoStationFoundException();
-		}*/
+		}
 		}
 		return nearest;
 	}
