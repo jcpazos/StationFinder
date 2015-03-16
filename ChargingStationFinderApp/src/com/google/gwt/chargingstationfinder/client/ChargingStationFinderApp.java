@@ -319,9 +319,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 						userMarker.setPosition(myLatLng);
 						try {
 							showRoute(findNearestStation(myLatLng));
-						} catch (NoStationFoundException e) {
-							e.printStackTrace();
-						}
+						} catch (NoStationFoundException e) {}
 					}
 				});
 
@@ -431,20 +429,16 @@ public class ChargingStationFinderApp implements EntryPoint {
 		LatLng nearest = null;
 		for (String[] s : stations) {
 			LatLng to = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
-			double distance = calculateDistance(from, to);
-			if (2 > distance && distance < minDistance) {
+			double distance = Spherical.computeDistanceBetween(from, to);
+			
+			if (setting.radius.radius() >= distance && distance < minDistance) {
 				nearest = to;
 				minDistance = distance;
 			}
-			if (minDistance == Double.POSITIVE_INFINITY) {
-				throw new NoStationFoundException();
 		}
-		}
+		if (minDistance == Double.POSITIVE_INFINITY) {
+			throw new NoStationFoundException();
+			}
 		return nearest;
-	}
-
-	private double calculateDistance(LatLng from, LatLng to) {
-		return Math.sqrt(Math.pow(from.lat() - to.lat(), 2)
-				+ Math.pow(from.lng() - to.lng(), 2));
 	}
 }
