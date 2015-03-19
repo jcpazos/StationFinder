@@ -49,6 +49,7 @@ import com.google.maps.gwt.client.MarkerImage;
 import com.google.maps.gwt.client.MarkerOptions;
 import com.google.maps.gwt.client.MouseEvent;
 import com.google.maps.gwt.client.TravelMode;
+import com.xedge.jquery.client.JQuery;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -465,8 +466,21 @@ public class ChargingStationFinderApp implements EntryPoint {
 				throw new NoStationFoundException();
 		}
 		}
+		resetTweetButton(minStation);
 		
 		return nearest;
+	}
+
+	private void resetTweetButton(String[] minStation) {
+		JQuery.select("#tweetBtn iframe").remove();
+		Element e = DOM.createAnchor();
+		e.addClassName("twitter-share-button");
+		e.setAttribute("href", "http://twitter.com/share");
+		e.setAttribute("data-url", "http://2-dot-selinatron.appspot.com/");
+		e.setAttribute("data-text", "Hey guys, I'm going to charge my car at "
+				       + minStation[2] + ", " + minStation[3] + ". If you want to charge yours too use this awesome app!");
+		JQuery.select("#tweetBtn").append(e);
+		refreshTwitterButtons();
 	}
 
 	private double calculateDistance(LatLng from, LatLng to) {
