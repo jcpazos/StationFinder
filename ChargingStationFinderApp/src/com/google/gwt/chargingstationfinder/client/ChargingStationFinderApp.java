@@ -478,7 +478,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		e.setAttribute("href", "http://twitter.com/share");
 		e.setAttribute("data-url", "http://2-dot-selinatron.appspot.com/");
 		e.setAttribute("data-text", "Hey guys, I'm going to charge my car at "
-				       + minStation[2] + ", " + minStation[3] + ". If you want to charge yours too use this awesome app!");
+				       + minStation[2] + ", " + minStation[3] + ". Use this awesome app if you want to charge yours too!");
 		JQuery.select("#tweetBtn").append(e);
 		refreshTwitterButtons();
 	}
