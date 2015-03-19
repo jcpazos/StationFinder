@@ -88,6 +88,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private DirectionsRenderer rend = DirectionsRenderer.create();
 	private Setting setting = new Setting();
 	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.png");
+	private Button postReview = new Button("Post");
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
