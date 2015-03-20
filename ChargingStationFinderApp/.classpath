@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="war/WEB-INF/lib/gwt-servlet.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="libs/gwt-jquery1.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Shanald/Downloads/gwt-jquery1.1.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

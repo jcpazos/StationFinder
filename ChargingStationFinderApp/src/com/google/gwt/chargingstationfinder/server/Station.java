@@ -14,7 +14,8 @@ public class Station {
 	@PrimaryKey
 	@Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
 	private Long id;
-	
+	@Persistent
+	  private User user;
 	@Persistent
 	private double latitude;
 	@Persistent
@@ -24,11 +25,12 @@ public class Station {
 	@Persistent
 	private String operator;
 	
-	public Station(double latitude, double longitude,String operator, String address) {
+	public Station(double latitude, double longitude,String operator, String address, User user) {
 		this.address = address;
 		this.latitude = latitude;
 		this.longitude = longitude;
 		this.operator = operator;
+		this.user = user;
 	}
 	
 	public Long getId() {

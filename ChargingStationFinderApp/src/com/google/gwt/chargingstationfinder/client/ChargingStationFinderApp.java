@@ -65,8 +65,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private final ParsingServiceAsync parsingService = GWT.create(ParsingService.class);
 	private HorizontalPanel addPanel = new HorizontalPanel();
 	private TextBox newSymbolTextBox = new TextBox();
+	private TextBox newSymbolTextBox1 = new TextBox();
 	private TextBox nearestStationTextBox = new TextBox();
 	private Button addAddressButton = new Button("Find Nearest Station");
+	private Button addAddressButton1 = new Button("Add Favourite Station");
 	private Button addStationsButton = new Button("AddStations");
 	private Label lastUpdatedLabel = new Label();
 	private Anchor signInLink = new Anchor("Sign In");
@@ -85,7 +87,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private DirectionsRenderer rend = DirectionsRenderer.create();
 	private Setting setting = new Setting();
 	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.png");
-
+	private String[] selectedStation = new String[4];
+	private String[][] favouriteStations = new String[23][4];
+	private int index;
+	
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
@@ -135,6 +140,14 @@ public class ChargingStationFinderApp implements EntryPoint {
 		addPanel.add(addAddressButton);
 		//addPanel.add(nearestStationTextBox);
 		addPanel.addStyleName("addressInput");
+		
+		// Assemble Add Address panel.
+				//newSymbolTextBox1.addStyleName("inputBox1");
+				//newSymbolTextBox1.getElement().setPropertyString("placeholder", "Enter Favourite Station");
+				//addPanel.add(newSymbolTextBox1);
+				addPanel.add(addAddressButton1);
+				//addPanel.add(nearestStationTextBox);
+				addPanel.addStyleName("addressInput1");
 
 		// Assemble control panel.
 		controlPanel.add(addPanel);
@@ -330,6 +343,19 @@ public class ChargingStationFinderApp implements EntryPoint {
 			}});	
 
 	}
+	
+	private void initializeaddNewSymbolTextBox1() {
+		addAddressButton1.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler(){
+
+			@Override
+			public void onClick(ClickEvent event) {
+				favouriteStations[index++] = selectedStation;
+				logger.log(Level.SEVERE, "indexs++");
+			}});	
+
+	}
+	
+	
 
 	protected void addStations(String[][] stations) {
 		this.stations = stations;
@@ -359,7 +385,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		}
 	}
 
-	private void displayStation(String[] s) {
+	private void displayStation(final String[] s) {
 		final LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
 		final String address = s[2];
 		final String operator = s[3];
@@ -372,9 +398,11 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			@Override
 			public void handle(MouseEvent event) {
+				selectedStation = s;
 				showRoute(position);
 				infoPanel.setText(0, 0, address);
 				infoPanel.setText(1, 0, operator);
+				
 			}});
 	}
 
@@ -395,6 +423,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		gMap.setCenter(this.userPosition);
 		initializeStations();
 		initializeaddNewSymbolTextBox();
+		initializeaddNewSymbolTextBox1();
 		rend.setMap(gMap);
 	}
 
@@ -433,7 +462,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			LatLng to = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
 			double distance = Spherical.computeDistanceBetween(from, to);
 			
-			if (setting.radius.radius() >= distance && distance < minDistance) {
+			if (/*setting.radius.radius() >= distance &&*/ distance < minDistance) {
 				nearest = to;
 				minDistance = distance;
 				minStation = s;
