@@ -6,7 +6,6 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
 
-import com.google.appengine.api.users.User;
 
 @PersistenceCapable(identityType = IdentityType.APPLICATION)
 public class Station {
@@ -15,22 +14,19 @@ public class Station {
 	@Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
 	private Long id;
 	@Persistent
-	  private User user;
+	protected double latitude;
 	@Persistent
-	private double latitude;
+	protected double longitude;
 	@Persistent
-	private double longitude;
+	protected String address;
 	@Persistent
-	private String address;
-	@Persistent
-	private String operator;
+	protected String operator;
 	
-	public Station(double latitude, double longitude,String operator, String address, User user) {
+	public Station(double latitude, double longitude,String operator, String address) {
 		this.address = address;
 		this.latitude = latitude;
 		this.longitude = longitude;
 		this.operator = operator;
-		this.user = user;
 	}
 	
 	public Long getId() {
