@@ -34,7 +34,7 @@ StationService {
 	    checkIsAdmin();
 	    PersistenceManager pm = getPersistenceManager();
 	    try {
-	      pm.makePersistent(new Station(latitude, longitude, operator, address, getUser()));
+	      pm.makePersistent(new Station(latitude, longitude, operator, address));
 	    } finally {
 	      pm.close();
 	    }
@@ -109,5 +109,20 @@ StationService {
 				throw new NotAdminException("User is not an admin");
 			
 		}
+	  
+	  public void addFavouriteStation(double latitude, double longitude,String operator, String address, User user) 
+			  throws NotLoggedInException, NotAdminException {
+		    checkLoggedIn();
+		    checkIsAdmin();
+		    PersistenceManager pm = getPersistenceManager();
+		    try {
+		      pm.makePersistent(new FavouriteStations(latitude, longitude, operator, address, user));
+		    } finally {
+		      pm.close();
+		    }
+		    
+		  }
+	  
+	 
 
 }
