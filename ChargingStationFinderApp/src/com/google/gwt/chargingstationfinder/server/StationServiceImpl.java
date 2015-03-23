@@ -34,7 +34,7 @@ StationService {
 	    checkIsAdmin();
 	    PersistenceManager pm = getPersistenceManager();
 	    try {
-	      pm.makePersistent(new Station(latitude, longitude, operator, address));
+	      pm.makePersistent(new Station(latitude, longitude, operator, address, getUser()));
 	    } finally {
 	      pm.close();
 	    }
@@ -68,7 +68,8 @@ StationService {
 	    PersistenceManager pm = getPersistenceManager();
 	    String[][] returnVal = null;
 	    try {
-	      Query q = pm.newQuery(Station.class);
+	      Query q = pm.newQuery(Station.class, "user==u");
+	      q.declareParameters("com.google.appengine.api.users.User u");
 	      List<Station> stations = (List<Station>) q.execute();
 	      int i=0;
 	      if (stations.size() == 0) return null;

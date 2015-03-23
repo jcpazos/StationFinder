@@ -7,10 +7,12 @@ import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.geolocation.client.Geolocation;
 import com.google.gwt.geolocation.client.Position;
 import com.google.gwt.geolocation.client.PositionError;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Anchor;
@@ -44,6 +46,7 @@ import com.google.maps.gwt.client.MarkerImage;
 import com.google.maps.gwt.client.MarkerOptions;
 import com.google.maps.gwt.client.MouseEvent;
 import com.google.maps.gwt.client.TravelMode;
+import com.xedge.jquery.client.JQuery;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -62,8 +65,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private final ParsingServiceAsync parsingService = GWT.create(ParsingService.class);
 	private HorizontalPanel addPanel = new HorizontalPanel();
 	private TextBox newSymbolTextBox = new TextBox();
+	private TextBox newSymbolTextBox1 = new TextBox();
 	private TextBox nearestStationTextBox = new TextBox();
 	private Button addAddressButton = new Button("Find Nearest Station");
+	private Button addAddressButton1 = new Button("Add Favourite Station");
 	private Button addStationsButton = new Button("AddStations");
 	private Label lastUpdatedLabel = new Label();
 	private Anchor signInLink = new Anchor("Sign In");
@@ -81,8 +86,11 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private Marker userMarker = Marker.create();
 	private DirectionsRenderer rend = DirectionsRenderer.create();
 	private Setting setting = new Setting();
-	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.jpg");
-
+	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.png");
+	private String[] selectedStation = new String[4];
+	private String[][] favouriteStations = new String[23][4];
+	private int index;
+	
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
@@ -132,6 +140,14 @@ public class ChargingStationFinderApp implements EntryPoint {
 		addPanel.add(addAddressButton);
 		//addPanel.add(nearestStationTextBox);
 		addPanel.addStyleName("addressInput");
+		
+		// Assemble Add Address panel.
+				//newSymbolTextBox1.addStyleName("inputBox1");
+				//newSymbolTextBox1.getElement().setPropertyString("placeholder", "Enter Favourite Station");
+				//addPanel.add(newSymbolTextBox1);
+				addPanel.add(addAddressButton1);
+				//addPanel.add(nearestStationTextBox);
+				addPanel.addStyleName("addressInput1");
 
 		// Assemble control panel.
 		controlPanel.add(addPanel);
@@ -279,6 +295,22 @@ public class ChargingStationFinderApp implements EntryPoint {
 				option.setIcon(BLUE_MARKER);
 				userMarker.setOptions(option);
 				userMarker.setMap(gMap);
+				
+				gMap.addClickListener(new GoogleMap.ClickHandler(){
+
+					@Override
+					public void handle(MouseEvent event) {
+						userPosition = event.getLatLng();
+						userMarker.setPosition(userPosition);
+						try {
+							showRoute(findNearestStation(userPosition));
+						} catch (NoStationFoundException e) {
+							//there is no station the exception displays a message
+						}
+						
+					}
+					
+				});
 			}
 		});
 	}
@@ -304,15 +336,26 @@ public class ChargingStationFinderApp implements EntryPoint {
 						userMarker.setPosition(myLatLng);
 						try {
 							showRoute(findNearestStation(myLatLng));
-						} catch (NoStationFoundException e) {
-							e.printStackTrace();
-						}
+						} catch (NoStationFoundException e) {}
 					}
 				});
 
 			}});	
 
 	}
+	
+	private void initializeaddNewSymbolTextBox1() {
+		addAddressButton1.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler(){
+
+			@Override
+			public void onClick(ClickEvent event) {
+				favouriteStations[index++] = selectedStation;
+				logger.log(Level.SEVERE, "indexs++");
+			}});	
+
+	}
+	
+	
 
 	protected void addStations(String[][] stations) {
 		this.stations = stations;
@@ -337,14 +380,12 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void displayStations() {
-		int i =0;
 		for (String[] s: stations) {
 			displayStation(s);
-			i++;
 		}
 	}
 
-	private void displayStation(String[] s) {
+	private void displayStation(final String[] s) {
 		final LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
 		final String address = s[2];
 		final String operator = s[3];
@@ -357,9 +398,11 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			@Override
 			public void handle(MouseEvent event) {
+				selectedStation = s;
 				showRoute(position);
 				infoPanel.setText(0, 0, address);
 				infoPanel.setText(1, 0, operator);
+				
 			}});
 	}
 
@@ -380,6 +423,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		gMap.setCenter(this.userPosition);
 		initializeStations();
 		initializeaddNewSymbolTextBox();
+		initializeaddNewSymbolTextBox1();
 		rend.setMap(gMap);
 	}
 
@@ -404,7 +448,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			@Override
 			public void handle(DirectionsResult result, DirectionsStatus status) {
-				// TODO Auto-generated method stub	
 				if(status == DirectionsStatus.OK)
 					rend.setDirections(result);
 			}
@@ -414,19 +457,40 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private LatLng findNearestStation(LatLng from) throws NoStationFoundException {
 		double minDistance = Double.POSITIVE_INFINITY;
 		LatLng nearest = null;
+		String[] minStation = null;
 		for (String[] s : stations) {
 			LatLng to = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
-			double distance = calculateDistance(from, to);
-			if (/*setting .radius.radius() > distance &&*/ distance < minDistance) {
+			double distance = Spherical.computeDistanceBetween(from, to);
+			
+			if (/*setting.radius.radius() >= distance &&*/ distance < minDistance) {
 				nearest = to;
 				minDistance = distance;
+				minStation = s;
 			}
-			/*if (minDistance == 1000000000.00) {
-				throw new NoStationFoundException();
-		}*/
 		}
+		if (minDistance == Double.POSITIVE_INFINITY) {
+			throw new NoStationFoundException();
+			}
+		
+		resetTweetButton(minStation);
 		return nearest;
 	}
+
+	private void resetTweetButton(String[] minStation) {
+		JQuery.select("#tweetBtn iframe").remove();
+		Element e = DOM.createAnchor();
+		e.addClassName("twitter-share-button");
+		e.setAttribute("href", "http://twitter.com/share");
+		e.setAttribute("data-url", "http://2-dot-selinatron.appspot.com/");
+		e.setAttribute("data-text", "Hey guys, I'm going to charge my car at "
+				       + minStation[2] + ", " + minStation[3] + ". Use this awesome app if you want to charge yours too!");
+		JQuery.select("#tweetBtn").append(e);
+		refreshTwitterButtons();
+	}
+
+	private static native void refreshTwitterButtons() /*-{
+		$wnd.twttr.widgets.load(); 
+	}-*/;
 
 	private double calculateDistance(LatLng from, LatLng to) {
 		return Math.sqrt(Math.pow(from.lat() - to.lat(), 2)
