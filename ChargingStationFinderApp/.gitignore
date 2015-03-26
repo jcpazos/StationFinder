@@ -60,7 +60,6 @@ www-test/
 *.class
 
 # Package Files #
-*.jar
 *.war
 
 # gwt caches and compiled units #
