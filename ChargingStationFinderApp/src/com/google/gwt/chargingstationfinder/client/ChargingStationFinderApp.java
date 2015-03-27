@@ -349,7 +349,24 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				favouriteStations[index++] = selectedStation;
+				try {
+					stationService.addFavouriteStation(0, 0, "asdas", "dasdsa", new AsyncCallback<Void>(){
+
+						@Override
+						public void onFailure(Throwable caught) {
+							logger.log(Level.SEVERE, "failure");
+							
+						}
+
+						@Override
+						public void onSuccess(Void result) {
+						     logger.log(Level.SEVERE, "success");
+							
+						}});
+				} catch (NotLoggedInException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}			
 				logger.log(Level.SEVERE, "indexs++");
 			}});	
 

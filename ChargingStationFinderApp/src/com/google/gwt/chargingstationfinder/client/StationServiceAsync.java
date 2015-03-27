@@ -10,5 +10,9 @@ public interface StationServiceAsync {
 	public void removeStation(String address, AsyncCallback<Void> async);
 	public void getStations(AsyncCallback<String[][]> async);
 	public void checkIsAdmin(AsyncCallback<Void> async) throws NotAdminException;
+	public void getFavouriteStations(AsyncCallback<String[][]> async) throws NotLoggedInException;
+	  public void removeFavouriteStation(String address,AsyncCallback<Void> async) throws NotLoggedInException;
+	  public void addFavouriteStation(double latitude, double longitude,String operator, String address,
+			  AsyncCallback<Void> async) throws NotLoggedInException;
 
 }

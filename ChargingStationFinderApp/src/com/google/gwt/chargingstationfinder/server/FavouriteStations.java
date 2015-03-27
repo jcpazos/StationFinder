@@ -5,27 +5,83 @@ import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Table;
 
 import com.google.appengine.api.users.User;
 
 @PersistenceCapable(identityType = IdentityType.APPLICATION)
-public class FavouriteStations extends Station {
+public class FavouriteStations {
 	
 	@PrimaryKey
 	@Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
 	private Long id;
-	
 	@Persistent
-	private User user;
+	protected double latitude;
+	@Persistent
+	protected double longitude;
+	@Persistent
+	protected String address;
+	@Persistent
+	protected String operator;
+	@Persistent
+	protected User user;
 	
-	public FavouriteStations(double latitude, double longitude,String operator, String address, User user) {
-		super(latitude, longitude, operator, address);
+	public FavouriteStations(double latitude, double longitude,String operator, String address, User u) {
+		this.address = address;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		this.operator = operator;
 		this.user = user;
-		
 	}
 	
-	public User getUser() {
-		return user;
+	public Long getId() {
+		return this.id;
+	}
+
+	public String getAddress() {
+		return address;
+	}
+	
+	public double getLatitude() {
+		return latitude;
+	}
+	
+	public double getLongitude() {
+		return longitude;
+	}
+	
+	public String getOperator() {
+		return operator;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((address == null) ? 0 : address.hashCode());
+		return result;
+	}
+	
+	public String toString() {
+		return (latitude +"," +longitude + "," + operator + "," + address);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Station other = (Station) obj;
+		if (address == null) {
+			if (other.address != null)
+				return false;
+		} else if (!address.equals(other.address))
+			return false;
+		return true;
 	}
 
 }

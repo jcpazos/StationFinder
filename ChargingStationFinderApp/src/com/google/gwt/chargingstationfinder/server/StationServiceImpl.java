@@ -109,13 +109,12 @@ StationService {
 			
 		}
 	  
-	  public void addFavouriteStation(double latitude, double longitude,String operator, String address, User user) 
-			  throws NotLoggedInException, NotAdminException {
+	  public void addFavouriteStation(double latitude, double longitude,String operator, String address) 
+			  throws NotLoggedInException{
 		    checkLoggedIn();
-		    checkIsAdmin();
 		    PersistenceManager pm = getPersistenceManager();
 		    try {
-		      pm.makePersistent(new FavouriteStations(latitude, longitude, operator, address, user));
+		      pm.makePersistent(new FavouriteStations(latitude, longitude, operator, address, getUser()));
 		    } finally {
 		      pm.close();
 		    }
@@ -151,7 +150,7 @@ StationService {
 		    try {
 		      Query q = pm.newQuery(FavouriteStations.class, "user==u");
 		      q.declareParameters("com.google.appengine.api.users.User u");
-		      List<Station> stations = (List<Station>) q.execute();
+		      List<Station> stations = (List<Station>) q.execute(getUser());
 		      int i=0;
 		      if (stations.size() == 0) return null;
 		      if (stations.get(0) == null) return null;
