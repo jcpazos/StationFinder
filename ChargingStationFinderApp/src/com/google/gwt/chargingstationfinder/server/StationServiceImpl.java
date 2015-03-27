@@ -68,8 +68,7 @@ StationService {
 	    PersistenceManager pm = getPersistenceManager();
 	    String[][] returnVal = null;
 	    try {
-	      Query q = pm.newQuery(Station.class, "user==u");
-	      q.declareParameters("com.google.appengine.api.users.User u");
+	      Query q = pm.newQuery(Station.class);
 	      List<Station> stations = (List<Station>) q.execute();
 	      int i=0;
 	      if (stations.size() == 0) return null;

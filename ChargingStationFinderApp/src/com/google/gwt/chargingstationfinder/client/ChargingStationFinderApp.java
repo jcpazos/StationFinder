@@ -485,7 +485,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 		e.setAttribute("data-text", "Hey guys, I'm going to charge my car at "
 				       + minStation[2] + ", " + minStation[3] + ". Use this awesome app if you want to charge yours too!");
 		JQuery.select("#tweetBtn").append(e);
+		
 		refreshTwitterButtons();
+		
 	}
 
 	private static native void refreshTwitterButtons() /*-{
