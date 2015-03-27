@@ -81,9 +81,9 @@ public class CSVParser {
 			for (int j=0; j<4;j++) {
 				stations[i][j] = station[j];
 			}
-			app.addStation(stations[i]);
+//			app.addStation(stations[i]);
 			i++;
 		}
-		app.addStations(stations);
+//		app.addStations(stations);
 	}
 }

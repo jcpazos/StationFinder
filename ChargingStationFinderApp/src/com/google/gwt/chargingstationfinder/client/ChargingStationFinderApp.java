@@ -1,8 +1,14 @@
 package com.google.gwt.chargingstationfinder.client;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gwt.chargingstationfinder.shared.MyLatLng;
+import com.google.gwt.chargingstationfinder.shared.Review;
+import com.google.gwt.chargingstationfinder.shared.Station;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -56,7 +62,7 @@ import com.google.maps.gwt.client.TravelMode;
 public class ChargingStationFinderApp implements EntryPoint {
 
 	private LatLng userPosition;
-	private String[][] stations;
+	private List<Station> stations = new ArrayList<Station>();
 	private GoogleMap gMap;
 	private FormPanel formPanel;
 	private Logger logger = Logger.getLogger(ChargingStationFinderApp.class.getName());
@@ -88,7 +94,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private DirectionsRenderer rend = DirectionsRenderer.create();
 	private Setting setting = new Setting();
 	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.png");
-	private Button postReview = new Button("Post");
+	private Button postReviewButton = new Button("Post");
+	private TextBox commentBox = new TextBox();
+	private Station selectedStation;
 
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
@@ -141,7 +149,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		addPanel.add(addAddressButton);
 		//addPanel.add(nearestStationTextBox);
 		addPanel.addStyleName("addressInput");
-		
+
 
 		// Assemble control panel.
 		controlPanel.add(addPanel);
@@ -153,12 +161,13 @@ public class ChargingStationFinderApp implements EntryPoint {
 		infoPanel.setText(1,0,"Operator:");
 		infoPanel.setText(2,0,"Rating:");
 
+		initializeReviewFunction();
 
 		infoPanel.addStyleName("info");
 		infoPanel.getCellFormatter().addStyleName(0, 0, "address");
 		infoPanel.getCellFormatter().addStyleName(1, 0, "operator");
 		infoPanel.getCellFormatter().addStyleName(2, 0, "rating");
-        
+
 		RootPanel.get().add(signOutLink);
 		RootPanel.get("control").add(controlPanel);
 		RootPanel.get("info").add(infoPanel);
@@ -168,6 +177,33 @@ public class ChargingStationFinderApp implements EntryPoint {
 		newSymbolTextBox.setFocus(true);	    
 
 		loadMap();
+	}
+
+	private void initializeReviewFunction() {
+		postReviewButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+			public void onClick(ClickEvent e){
+				String comment = newSymbolTextBox.getText();
+				newSymbolTextBox.setText("");
+				Review r = new Review(4, comment);
+				try {
+					selectedStation.addReview(r);
+				} catch (InvalidReviewException e1) {
+					e1.printStackTrace();
+				}
+				stationService.updateStation(selectedStation, new AsyncCallback<Void>() {
+					@Override
+					public void onFailure(Throwable caught) {
+						
+					}
+					@Override
+					public void onSuccess(Void result) {
+						displayReviews(selectedStation.getReviews());
+					}
+				});
+			}
+		});
+		controlPanel.add(postReviewButton);
+		//		controlPanel.add(commentBox);
 	}
 
 	private void initializeAddStationsButton() {
@@ -199,7 +235,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void initializeStations() {
-		stationService.getStations(new AsyncCallback<String[][]>(){
+		stationService.getStations(new AsyncCallback<List<Station>>(){
 
 			@Override
 			public void onFailure(Throwable caught) {
@@ -208,7 +244,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			}
 
 			@Override
-			public void onSuccess(String[][] result) {
+			public void onSuccess(List<Station> result) {
 				if (result != null) {
 					stations = result;
 					displayStations();
@@ -216,6 +252,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			}});
 	}
 	
+
 	public static native void function(/*d,s,id*/)/*-{
 		var js,fjs=document.getElementsByTagName(s)[0],p=/^http:/.test(document.location)?'http':'https';
 		if(!document.getElementById('twitter-wjs')) {
@@ -223,12 +260,12 @@ public class ChargingStationFinderApp implements EntryPoint {
 			js.id=id;js.src=p+'://platform.twitter.com/widgets.js';
 			fjs.parentNode.insertBefore(js,fjs);}
 	}-*/;
-       // (document, 'script', 'twitter-wjs');
-	
+	// (document, 'script', 'twitter-wjs');
+
 	public static native void refreshTwitterButtons()/*-{
     $wnd.twttr.widgets.load();
  }-*/;
-	
+
 
 	private void requestParsingInput() {
 		Button okButton = new Button("Ok");
@@ -247,7 +284,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onClick(ClickEvent event) {
 				l.setText(inputBox.getText());
 				dialogInputBox.hide();
-				parsingService.parseData(inputBox.getText(), new AsyncCallback<String[][]>(){
+				parsingService.parseData(inputBox.getText(), new AsyncCallback<List<Station>>(){
 
 					@Override
 					public void onFailure(Throwable caught) {
@@ -256,15 +293,18 @@ public class ChargingStationFinderApp implements EntryPoint {
 					}
 
 					@Override
-					public void onSuccess(String[][] result) {
+					public void onSuccess(List<Station> result) {
 						if (result == null) {
 							displayInvalidURLBox();
 							return;
 						}
-						addStations(result);
+						try{
+							addStations(result);
+						}catch (Exception e) {
+
+						}
 						displayStations();
 					}});
-
 			}});
 	}
 
@@ -303,7 +343,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				option.setIcon(BLUE_MARKER);
 				userMarker.setOptions(option);
 				userMarker.setMap(gMap);
-				
+
 				gMap.addClickListener(new GoogleMap.ClickHandler(){
 
 					@Override
@@ -314,9 +354,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 						} catch (NoStationFoundException e) {
 							//there is no station the exception displays a message
 						}
-						
 					}
-					
 				});
 			}
 		});
@@ -353,18 +391,17 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 	}
 
-	protected void addStations(String[][] stations) {
+	protected void addStations(List<Station> stations) throws InvalidReviewException {
 		this.stations = stations;
-		for (int i = 0; i<stations.length;i++) {
-			String[] station = stations[i];
+		for (int i = 0; i<stations.size();i++) {
+			Station station = stations.get(i);
 			addStation(station);
 		}
+
 	}
 
-	protected void addStation(final String[] station) {
-		stationService.addStation(Double.parseDouble(station[0]), 
-				Double.parseDouble(station[1]),station[2], station[3], 
-				new AsyncCallback<Void>() {
+	protected void addStation(final Station station) {
+		stationService.addStation(station, new AsyncCallback<Void>() {
 
 			public void onFailure(Throwable caught) {
 				handleError(caught);
@@ -376,17 +413,16 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void displayStations() {
-		int i =0;
-		for (String[] s: stations) {
+		for (Station s: stations) {
 			displayStation(s);
-			i++;
 		}
 	}
 
-	private void displayStation(String[] s) {
-		final LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
-		final String address = s[2];
-		final String operator = s[3];
+	private void displayStation(Station s) {
+		final Station station = s;
+		final LatLng position = LatLngConverter.toLatLng((s.getPosition()));
+		final String address = s.getAddress();
+		final String operator = s.getOperator();
 
 		final MarkerOptions markerOptions = MarkerOptions.create();
 		markerOptions.setPosition(position);
@@ -396,10 +432,26 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			@Override
 			public void handle(MouseEvent event) {
-				showRoute(position);
+				selectedStation = station;
+				showRoute(station);
 				infoPanel.setText(0, 0, address);
 				infoPanel.setText(1, 0, operator);
+				displayReviews(station.getReviews());
 			}});
+	}
+
+	private void displayReviews(ArrayList<Review> reviews) {
+		Integer rating = 0;
+		for (int i = 0; i < reviews.size(); i++) {
+			rating += reviews.get(i).getRating();
+		}
+		rating /= reviews.size();
+		String text = rating.toString();
+
+		for (int i = 0; i < reviews.size(); i++) {
+			text = text.concat("\n" + reviews.get(i).getComment());
+		}
+		infoPanel.setText(2, 0, text);
 	}
 
 	private void displayMap(FormPanel formPanel) {
@@ -424,17 +476,17 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 	private void handleError(Throwable error) {
 
-	    Window.alert(error.getMessage());
-	    if (error instanceof NotLoggedInException) {
-	      Window.Location.replace(loginInfo.getLogoutUrl());
-	    }
-	  }
-	
-	private void showRoute(LatLng dest) {
-		
+		Window.alert(error.getMessage());
+		if (error instanceof NotLoggedInException) {
+			Window.Location.replace(loginInfo.getLogoutUrl());
+		}
+	}
+
+	private void showRoute(Station dest) {
+
 		DirectionsRequest req = DirectionsRequest.create();
 		req.setOrigin(userPosition);
-		req.setDestination(dest);
+		req.setDestination(LatLngConverter.toLatLng((dest.getPosition())));
 		req.setTravelMode(TravelMode.DRIVING);
 
 		DirectionsService serv = DirectionsService.create();
@@ -443,30 +495,26 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			@Override
 			public void handle(DirectionsResult result, DirectionsStatus status) {
-				// TODO Auto-generated method stub	
 				if(status == DirectionsStatus.OK)
 					rend.setDirections(result);
 			}
 		});
 	}
-	
-	private LatLng findNearestStation(LatLng from) throws NoStationFoundException {
-		String[] minStation = null;
+
+	private Station findNearestStation(LatLng from) throws NoStationFoundException {
 		double minDistance = Double.POSITIVE_INFINITY;
-		LatLng nearest = null;
-		for (String[] s : stations) {
-			LatLng to = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
-			double distance = calculateDistance(from, to);
+		Station nearest = null;
+		for (Station s : stations) {
+			double distance = calculateDistance(from, LatLngConverter.toLatLng((s.getPosition())));
 			if (2 > distance && distance < minDistance) {
-				nearest = to;
+				nearest = s;
 				minDistance = distance;
-				minStation = s;
 			}
 			if (minDistance == Double.POSITIVE_INFINITY) {
 				throw new NoStationFoundException();
+			}
 		}
-		}
-		
+
 		return nearest;
 	}
 
