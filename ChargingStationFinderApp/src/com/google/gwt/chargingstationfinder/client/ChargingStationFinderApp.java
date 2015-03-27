@@ -101,7 +101,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 	public void onModuleLoad() {
 
 		// Check login status using login service.
-		System.out.println("HI");
 		LoginServiceAsync loginService = GWT.create(LoginService.class);
 		loginService.login(GWT.getHostPageBaseURL(), new AsyncCallback<LoginInfo>() {
 			public void onFailure(Throwable error) {
@@ -111,6 +110,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onSuccess(LoginInfo result) {
 				loginInfo = result;
 				if(loginInfo.isLoggedIn()) {
+					
 					loadStationFinderApp();
 				} else {
 					loadLogin();
@@ -128,7 +128,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void loadStationFinderApp() {
-
+	    RootPanel.get("tweetBtn").getElement().getStyle().setProperty("visibility", "visible");
 		// Set up sign out hyperlink.
 		signOutLink.setHref(loginInfo.getLogoutUrl());
 		signOutLink.addStyleName("signOut");
