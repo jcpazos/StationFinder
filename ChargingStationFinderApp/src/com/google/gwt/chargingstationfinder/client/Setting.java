@@ -4,7 +4,9 @@ public class Setting {
 
 	RadiusSetting radius;
 	public Setting() {
-		this.radius = RadiusSetting.ONE_KM;    // Set the default radius to 1 km
+		this.radius = RadiusSetting.DEFAULT;    // Set the default radius
 	}
-	
+	public void setRadius(RadiusSetting r) {
+		this.radius = r;
+	}
 }
