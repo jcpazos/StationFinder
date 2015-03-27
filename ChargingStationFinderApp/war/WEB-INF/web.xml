@@ -44,16 +44,6 @@
   </servlet-mapping>
   
   
-  <servlet>
-    <servlet-name>reviewService</servlet-name>
-    <servlet-class>com.google.gwt.chargingstationfinder.server.ReviewServiceImpl</servlet-class>
-  </servlet>
-  
-  <servlet-mapping>
-    <servlet-name>reviewService</servlet-name>
-    <url-pattern>/chargingstationfinderapp/review</url-pattern>
-  </servlet-mapping>
-  
 
 
 </web-app>

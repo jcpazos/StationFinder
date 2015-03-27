@@ -13,7 +13,6 @@ import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.geolocation.client.Geolocation;
@@ -28,13 +27,11 @@ import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.maps.gwt.client.DirectionsRenderer;
 import com.google.maps.gwt.client.DirectionsRequest;
 import com.google.maps.gwt.client.DirectionsResult;
@@ -55,6 +52,7 @@ import com.google.maps.gwt.client.MarkerImage;
 import com.google.maps.gwt.client.MarkerOptions;
 import com.google.maps.gwt.client.MouseEvent;
 import com.google.maps.gwt.client.TravelMode;
+import com.xedge.jquery.client.JQuery;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
@@ -73,13 +71,14 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private final ParsingServiceAsync parsingService = GWT.create(ParsingService.class);
 	private HorizontalPanel addPanel = new HorizontalPanel();
 	private TextBox newSymbolTextBox = new TextBox();
+	private TextBox newSymbolTextBox1 = new TextBox();
 	private TextBox nearestStationTextBox = new TextBox();
 	private Button addAddressButton = new Button("Find Nearest Station");
+	private Button addAddressButton1 = new Button("Add Favourite Station");
 	private Button addStationsButton = new Button("AddStations");
 	private Label lastUpdatedLabel = new Label();
 	private Anchor signInLink = new Anchor("Sign In");
 	private Anchor signOutLink = new Anchor("Sign Out");
-	private Anchor twitterLink = new Anchor("Tweet");
 	private LoginInfo loginInfo = null;
 	private Label loginLabel = new Label(
 			"Please sign in to your Google Account to access the StationFinder application.");
@@ -98,6 +97,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private TextBox commentBox = new TextBox();
 	private Station selectedStation;
 
+	//	private String[][] favouriteStations = new String[23][4];
+	private int index;
+
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
@@ -108,7 +110,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 	public void onModuleLoad() {
 
 		// Check login status using login service.
-		System.out.println("HI");
 		LoginServiceAsync loginService = GWT.create(LoginService.class);
 		loginService.login(GWT.getHostPageBaseURL(), new AsyncCallback<LoginInfo>() {
 			public void onFailure(Throwable error) {
@@ -118,6 +119,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onSuccess(LoginInfo result) {
 				loginInfo = result;
 				if(loginInfo.isLoggedIn()) {
+
 					loadStationFinderApp();
 				} else {
 					loadLogin();
@@ -135,12 +137,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void loadStationFinderApp() {
-
+		RootPanel.get("tweetBtn").getElement().getStyle().setProperty("visibility", "visible");
 		// Set up sign out hyperlink.
 		signOutLink.setHref(loginInfo.getLogoutUrl());
-		twitterLink.setHref("");
 		signOutLink.addStyleName("signOut");
-		refreshTwitterButtons();
 
 		// Assemble Add Address panel.
 		newSymbolTextBox.addStyleName("inputBox");
@@ -149,7 +149,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 		addPanel.add(addAddressButton);
 		//addPanel.add(nearestStationTextBox);
 		addPanel.addStyleName("addressInput");
-
+		
+		addPanel.add(addAddressButton1);
+		addPanel.addStyleName("addressInput1");
 
 		// Assemble control panel.
 		controlPanel.add(addPanel);
@@ -193,7 +195,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				stationService.updateStation(selectedStation, new AsyncCallback<Void>() {
 					@Override
 					public void onFailure(Throwable caught) {
-						
+
 					}
 					@Override
 					public void onSuccess(Void result) {
@@ -251,20 +253,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 				}
 			}});
 	}
-	
-
-	public static native void function(/*d,s,id*/)/*-{
-		var js,fjs=document.getElementsByTagName(s)[0],p=/^http:/.test(document.location)?'http':'https';
-		if(!document.getElementById('twitter-wjs')) {
-			js=document.createElement(s);
-			js.id=id;js.src=p+'://platform.twitter.com/widgets.js';
-			fjs.parentNode.insertBefore(js,fjs);}
-	}-*/;
-	// (document, 'script', 'twitter-wjs');
-
-	public static native void refreshTwitterButtons()/*-{
-    $wnd.twttr.widgets.load();
- }-*/;
 
 
 	private void requestParsingInput() {
@@ -349,6 +337,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 					@Override
 					public void handle(MouseEvent event) {
 						userPosition = event.getLatLng();
+						userMarker.setPosition(userPosition);
 						try {
 							showRoute(findNearestStation(userPosition));
 						} catch (NoStationFoundException e) {
@@ -381,15 +370,14 @@ public class ChargingStationFinderApp implements EntryPoint {
 						userMarker.setPosition(myLatLng);
 						try {
 							showRoute(findNearestStation(myLatLng));
-						} catch (NoStationFoundException e) {
-							e.printStackTrace();
-						}
+						} catch (NoStationFoundException e) {}
 					}
 				});
 
 			}});	
 
 	}
+
 
 	protected void addStations(List<Station> stations) throws InvalidReviewException {
 		this.stations = stations;
@@ -417,6 +405,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			displayStation(s);
 		}
 	}
+
 
 	private void displayStation(Station s) {
 		final Station station = s;
@@ -501,22 +490,40 @@ public class ChargingStationFinderApp implements EntryPoint {
 		});
 	}
 
+
 	private Station findNearestStation(LatLng from) throws NoStationFoundException {
 		double minDistance = Double.POSITIVE_INFINITY;
 		Station nearest = null;
 		for (Station s : stations) {
-			double distance = calculateDistance(from, LatLngConverter.toLatLng((s.getPosition())));
-			if (2 > distance && distance < minDistance) {
+			double distance = Spherical.computeDistanceBetween(from, LatLngConverter.toLatLng((s.getPosition())));
+			if (distance < minDistance) {
 				nearest = s;
 				minDistance = distance;
 			}
-			if (minDistance == Double.POSITIVE_INFINITY) {
-				throw new NoStationFoundException();
-			}
+		}
+		if (minDistance == Double.POSITIVE_INFINITY) {
+			throw new NoStationFoundException();
 		}
 
+		resetTweetButton(nearest);
 		return nearest;
 	}
+
+	private void resetTweetButton(Station minStation) {
+		JQuery.select("#tweetBtn iframe").remove();
+		Element e = DOM.createAnchor();
+		e.addClassName("twitter-share-button");
+		e.setAttribute("href", "http://twitter.com/share");
+		e.setAttribute("data-url", "http://2-dot-selinatron.appspot.com/");
+		e.setAttribute("data-text", "Hey guys, I'm going to charge my car at "
+				+ minStation.getOperator() + ", " + minStation.getAddress() + ". Use this awesome app if you want to charge yours too!");
+		JQuery.select("#tweetBtn").append(e);
+		refreshTwitterButtons();
+	}
+
+	private static native void refreshTwitterButtons() /*-{
+		$wnd.twttr.widgets.load(); 
+	}-*/;
 
 	private double calculateDistance(LatLng from, LatLng to) {
 		return Math.sqrt(Math.pow(from.lat() - to.lat(), 2)

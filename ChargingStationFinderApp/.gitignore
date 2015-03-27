@@ -10,12 +10,31 @@ tmp/
 *.bak
 *.swp
 *~.nib
+*.class
 local.properties
 .settings/
 .loadpath
 
-# Eclipse Core
-.project
+# gwt caches and compiled units #
+war/gwt_bree/
+gwt-unitCache/
+
+# boilerplate generated classes #
+.apt_generated/
+
+# more caches and things from deploy #
+war/WEB-INF/deploy/
+war/WEB-INF/classes/
+
+#compilation logs
+.gwt/
+
+#caching for already compiled files
+gwt-unitCache/
+
+#gwt junit compilation files
+www-test/
+
 
 # External tool builders
 .externalToolBuilders/
@@ -26,8 +45,6 @@ local.properties
 # CDT-specific
 .cproject
 
-# JDT-specific (Eclipse Java Development Tools)
-.classpath
 
 # PDT-specific
 .buildpath
@@ -43,7 +60,6 @@ local.properties
 *.class
 
 # Package Files #
-*.jar
 *.war
 
 # gwt caches and compiled units #

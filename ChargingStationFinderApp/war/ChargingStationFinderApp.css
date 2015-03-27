@@ -70,7 +70,7 @@ h1 {
 	bottom: 0%;
 	right: 5%;
 	width: 100%;
-	margin: 5px;
+	margin-top: 2%;
 }
 
 .inputBox {
@@ -131,6 +131,12 @@ h1 {
 	position: absolute;
 	right: 16.5%;
 	top: 0%;
+}
+
+.tweetBtn {
+	position: absolute;
+	right: 20px;
+	top: 0px;
 }
 
 }
