@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.maps.gwt.client.DirectionsRenderer;
@@ -93,8 +94,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private DirectionsRenderer rend = DirectionsRenderer.create();
 	private Setting setting = new Setting();
 	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.png");
-	private Button postReviewButton = new Button("Post");
-	private TextBox commentBox = new TextBox();
+	private Button postReviewButton = new Button("Post Review");
+	private TextArea commentBox = new TextArea();
 	private Station selectedStation;
 
 	//	private String[][] favouriteStations = new String[23][4];
@@ -149,7 +150,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		addPanel.add(addAddressButton);
 		//addPanel.add(nearestStationTextBox);
 		addPanel.addStyleName("addressInput");
-		
+
 		addPanel.add(addAddressButton1);
 		addPanel.addStyleName("addressInput1");
 
@@ -169,7 +170,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 		infoPanel.getCellFormatter().addStyleName(0, 0, "address");
 		infoPanel.getCellFormatter().addStyleName(1, 0, "operator");
 		infoPanel.getCellFormatter().addStyleName(2, 0, "rating");
-
+		infoPanel.getCellFormatter().addStyleName(3, 0, "commentBoxCell");
+		infoPanel.getCellFormatter().addStyleName(4, 0, "reviewButtonCell");
+		
 		RootPanel.get().add(signOutLink);
 		RootPanel.get("control").add(controlPanel);
 		RootPanel.get("info").add(infoPanel);
@@ -184,8 +187,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private void initializeReviewFunction() {
 		postReviewButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 			public void onClick(ClickEvent e){
-				String comment = newSymbolTextBox.getText();
-				newSymbolTextBox.setText("");
+				String comment = commentBox.getText();
+				commentBox.setText("");
 				Review r = new Review(4, comment);
 				try {
 					selectedStation.addReview(r);
@@ -204,8 +207,13 @@ public class ChargingStationFinderApp implements EntryPoint {
 				});
 			}
 		});
-		controlPanel.add(postReviewButton);
-		//		controlPanel.add(commentBox);
+		
+		commentBox.addStyleDependentName("comment");
+		commentBox.getElement().setPropertyString("placeholder", "Share Your Experience at This Station");
+		postReviewButton.addStyleDependentName("review");
+		
+		infoPanel.setWidget(3, 0, commentBox);
+		infoPanel.setWidget(4, 0, postReviewButton);
 	}
 
 	private void initializeAddStationsButton() {
@@ -518,9 +526,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 		e.setAttribute("data-text", "Hey guys, I'm going to charge my car at "
 				+ minStation.getOperator() + ", " + minStation.getAddress() + ". Use this awesome app if you want to charge yours too!");
 		JQuery.select("#tweetBtn").append(e);
-		
+
 		refreshTwitterButtons();
-		
+
 	}
 
 	private static native void refreshTwitterButtons() /*-{
