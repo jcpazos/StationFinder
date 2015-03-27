@@ -121,6 +121,7 @@ StationService {
 			pm.makePersistent(new FavouriteStations(latitude, longitude, operator, address, user));
 		} finally {
 			pm.close();
+
 		}
 
 	}
