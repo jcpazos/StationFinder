@@ -18,6 +18,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.geolocation.client.Geolocation;
 import com.google.gwt.geolocation.client.Position;
 import com.google.gwt.geolocation.client.PositionError;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -29,6 +30,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -96,6 +98,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private Button postReviewButton = new Button("Post");
 	private TextBox commentBox = new TextBox();
 	private Station selectedStation;
+	private HorizontalPanel menuBar = new HorizontalPanel();
+	private MenuBar settingMenu= new MenuBar();
 
 	//	private String[][] favouriteStations = new String[23][4];
 	private int index;
@@ -162,6 +166,22 @@ public class ChargingStationFinderApp implements EntryPoint {
 		infoPanel.setText(0,0,"Address:");
 		infoPanel.setText(1,0,"Operator:");
 		infoPanel.setText(2,0,"Rating:");
+		infoPanel.setText(3,0,"Radius is now set to be " + setting.radius.getName());
+		
+		menuBar.addStyleName("menu");
+		final MenuBar radiusMenu = new MenuBar(true);
+		for (final RadiusSetting radius: setting.radius.getClass().getEnumConstants()) {
+			radiusMenu.addItem(radius.getName(), new Command() {
+				@Override
+				public void execute() {
+					setting.setRadius(radius);
+					settingMenu.setAnimationEnabled(true);
+					infoPanel.setText(3, 0, "Radius is now set to be " + setting.radius.getName());
+				}
+			});
+		}
+		settingMenu.addItem("Radius setting", radiusMenu);
+		menuBar.add(settingMenu);
 
 		initializeReviewFunction();
 
@@ -174,6 +194,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		RootPanel.get("control").add(controlPanel);
 		RootPanel.get("info").add(infoPanel);
 		RootPanel.get().addStyleName("background");
+		RootPanel.get("menu").add(menuBar);
 
 		// Move cursor focus to the input box.
 		newSymbolTextBox.setFocus(true);	    
