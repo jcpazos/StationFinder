@@ -1,8 +1,14 @@
 package com.google.gwt.chargingstationfinder.client;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gwt.chargingstationfinder.shared.MyLatLng;
+import com.google.gwt.chargingstationfinder.shared.Review;
+import com.google.gwt.chargingstationfinder.shared.Station;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -12,6 +18,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.geolocation.client.Geolocation;
 import com.google.gwt.geolocation.client.Position;
 import com.google.gwt.geolocation.client.PositionError;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -23,6 +30,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -54,7 +62,7 @@ import com.xedge.jquery.client.JQuery;
 public class ChargingStationFinderApp implements EntryPoint {
 
 	private LatLng userPosition;
-	private String[][] stations;
+	private List<Station> stations = new ArrayList<Station>();
 	private GoogleMap gMap;
 	private FormPanel formPanel;
 	private Logger logger = Logger.getLogger(ChargingStationFinderApp.class.getName());
@@ -84,13 +92,21 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private VerticalPanel controlPanel = new VerticalPanel();
 	private FlexTable infoPanel = new FlexTable();
 	private Marker userMarker = Marker.create();
+	private Marker selectedMarker;
 	private DirectionsRenderer rend = DirectionsRenderer.create();
 	private Setting setting = new Setting();
 	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.png");
-	private String[] selectedStation = new String[4];
-	private String[][] favouriteStations = new String[23][4];
+	private MarkerImage GREEN_MARKER = MarkerImage.create("images/icon_green.png");
+	private Button postReviewButton = new Button("Post");
+	private TextBox commentBox = new TextBox();
+	private Station selectedStation;
+	private HorizontalPanel menuBar = new HorizontalPanel();
+	private MenuBar settingMenu= new MenuBar();
+	private String userEmailAddress;
+
+	//	private String[][] favouriteStations = new String[23][4];
 	private int index;
-	
+
 	/**
 	 * Create a remote service proxy to talk to the server-side Greeting service.
 	 */
@@ -110,7 +126,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onSuccess(LoginInfo result) {
 				loginInfo = result;
 				if(loginInfo.isLoggedIn()) {
-					
+
 					loadStationFinderApp();
 				} else {
 					loadLogin();
@@ -128,7 +144,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void loadStationFinderApp() {
-	    RootPanel.get("tweetBtn").getElement().getStyle().setProperty("visibility", "visible");
+		RootPanel.get("tweetBtn").getElement().getStyle().setProperty("visibility", "visible");
 		// Set up sign out hyperlink.
 		signOutLink.setHref(loginInfo.getLogoutUrl());
 		signOutLink.addStyleName("signOut");
@@ -141,24 +157,36 @@ public class ChargingStationFinderApp implements EntryPoint {
 		//addPanel.add(nearestStationTextBox);
 		addPanel.addStyleName("addressInput");
 		
-		// Assemble Add Address panel.
-				//newSymbolTextBox1.addStyleName("inputBox1");
-				//newSymbolTextBox1.getElement().setPropertyString("placeholder", "Enter Favourite Station");
-				//addPanel.add(newSymbolTextBox1);
-				addPanel.add(addAddressButton1);
-				//addPanel.add(nearestStationTextBox);
-				addPanel.addStyleName("addressInput1");
+		addPanel.add(addAddressButton1);
+		addPanel.addStyleName("addressInput1");
 
 		// Assemble control panel.
 		controlPanel.add(addPanel);
 		controlPanel.add(lastUpdatedLabel);
-		initializeAddStationsButton(); 
+		initializeAddStationsButton();
 		controlPanel.addStyleName("control");
 
 		infoPanel.setText(0,0,"Address:");
 		infoPanel.setText(1,0,"Operator:");
 		infoPanel.setText(2,0,"Rating:");
+		infoPanel.setText(3,0,"Radius is now set to be " + setting.radius.getName());
+		
+		menuBar.addStyleName("menu");
+		final MenuBar radiusMenu = new MenuBar(true);
+		for (final RadiusSetting radius: setting.radius.getClass().getEnumConstants()) {
+			radiusMenu.addItem(radius.getName(), new Command() {
+				@Override
+				public void execute() {
+					setting.setRadius(radius);
+					settingMenu.setAnimationEnabled(true);
+					infoPanel.setText(3, 0, "Radius is now set to be " + setting.radius.getName());
+				}
+			});
+		}
+		settingMenu.addItem("Radius setting", radiusMenu);
+		menuBar.add(settingMenu);
 
+		initializeReviewFunction();
 
 		infoPanel.addStyleName("info");
 		infoPanel.getCellFormatter().addStyleName(0, 0, "address");
@@ -169,11 +197,39 @@ public class ChargingStationFinderApp implements EntryPoint {
 		RootPanel.get("control").add(controlPanel);
 		RootPanel.get("info").add(infoPanel);
 		RootPanel.get().addStyleName("background");
+		RootPanel.get("menu").add(menuBar);
 
 		// Move cursor focus to the input box.
 		newSymbolTextBox.setFocus(true);	    
 
 		loadMap();
+	}
+
+	private void initializeReviewFunction() {
+		postReviewButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+			public void onClick(ClickEvent e){
+				String comment = newSymbolTextBox.getText();
+				newSymbolTextBox.setText("");
+				Review r = new Review(4, comment);
+				try {
+					selectedStation.addReview(r);
+				} catch (InvalidReviewException e1) {
+					e1.printStackTrace();
+				}
+				stationService.updateStation(selectedStation, new AsyncCallback<Void>() {
+					@Override
+					public void onFailure(Throwable caught) {
+
+					}
+					@Override
+					public void onSuccess(Void result) {
+						displayReviews(selectedStation.getReviews());
+					}
+				});
+			}
+		});
+		controlPanel.add(postReviewButton);
+		//		controlPanel.add(commentBox);
 	}
 
 	private void initializeAddStationsButton() {
@@ -205,7 +261,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void initializeStations() {
-		stationService.getStations(new AsyncCallback<String[][]>(){
+		stationService.getStations(new AsyncCallback<List<Station>>(){
 
 			@Override
 			public void onFailure(Throwable caught) {
@@ -214,13 +270,32 @@ public class ChargingStationFinderApp implements EntryPoint {
 			}
 
 			@Override
-			public void onSuccess(String[][] result) {
+			public void onSuccess(List<Station> result) {
 				if (result != null) {
 					stations = result;
-					displayStations();
+					try {
+						stationService.getUserEmailAddress(new AsyncCallback<String>(){
+
+							@Override
+							public void onFailure(Throwable caught) {
+								logger.log(Level.SEVERE, "fail");
+								
+							}
+
+							@Override
+							public void onSuccess(String result) {
+								userEmailAddress = result;
+								displayStations();
+								
+							}});
+					} catch (NotLoggedInException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			}});
 	}
+
 
 	private void requestParsingInput() {
 		Button okButton = new Button("Ok");
@@ -239,7 +314,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onClick(ClickEvent event) {
 				l.setText(inputBox.getText());
 				dialogInputBox.hide();
-				parsingService.parseData(inputBox.getText(), new AsyncCallback<String[][]>(){
+				parsingService.parseData(inputBox.getText(), new AsyncCallback<List<Station>>(){
 
 					@Override
 					public void onFailure(Throwable caught) {
@@ -248,15 +323,18 @@ public class ChargingStationFinderApp implements EntryPoint {
 					}
 
 					@Override
-					public void onSuccess(String[][] result) {
+					public void onSuccess(List<Station> result) {
 						if (result == null) {
 							displayInvalidURLBox();
 							return;
 						}
-						addStations(result);
+						try{
+							addStations(result);
+						}catch (Exception e) {
+
+						}
 						displayStations();
 					}});
-
 			}});
 	}
 
@@ -295,7 +373,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				option.setIcon(BLUE_MARKER);
 				userMarker.setOptions(option);
 				userMarker.setMap(gMap);
-				
+
 				gMap.addClickListener(new GoogleMap.ClickHandler(){
 
 					@Override
@@ -307,9 +385,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 						} catch (NoStationFoundException e) {
 							//there is no station the exception displays a message
 						}
-						
 					}
-					
 				});
 			}
 		});
@@ -342,85 +418,73 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			}});	
 
-	}
-	
-	private void initializeaddNewSymbolTextBox1() {
-		addAddressButton1.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler(){
+	}	
 
-			@Override
-			public void onClick(ClickEvent event) {
-				try {
-					stationService.addFavouriteStation(0, 0, "asdas", "dasdsa", new AsyncCallback<Void>(){
-
-						@Override
-						public void onFailure(Throwable caught) {
-							logger.log(Level.SEVERE, "failure");
-							
-						}
-
-						@Override
-						public void onSuccess(Void result) {
-						     logger.log(Level.SEVERE, "success");
-							
-						}});
-				} catch (NotLoggedInException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}			
-				logger.log(Level.SEVERE, "indexs++");
-			}});	
-
-	}
-	
-	
-
-	protected void addStations(String[][] stations) {
+	protected void addStations(List<Station> stations) throws InvalidReviewException {
 		this.stations = stations;
-		for (int i = 0; i<stations.length;i++) {
-			String[] station = stations[i];
+		for (int i = 0; i<stations.size();i++) {
+			Station station = stations.get(i);
 			addStation(station);
 		}
+
 	}
 
-	protected void addStation(final String[] station) {
-		stationService.addStation(Double.parseDouble(station[0]), 
-				Double.parseDouble(station[1]),station[2], station[3], 
-				new AsyncCallback<Void>() {
+	protected void addStation(final Station station) {
+		stationService.addStation(station, new AsyncCallback<Void>() {
 
 			public void onFailure(Throwable caught) {
 				handleError(caught);
 			}
 			public void onSuccess(Void result) {
-				displayStation(station);
+				displayStation(station, null);
 			}
 		});
 	}
 
 	private void displayStations() {
-		for (String[] s: stations) {
-			displayStation(s);
+		for (Station s: stations) {
+			if (s.getUserEmails().contains(userEmailAddress)) displayStation(s, "green");
+			else displayStation(s, null);
 		}
 	}
 
-	private void displayStation(final String[] s) {
-		final LatLng position = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
-		final String address = s[2];
-		final String operator = s[3];
+
+	private void displayStation(Station s, String markerColour) {
+		final Station station = s;
+		final LatLng position = LatLngConverter.toLatLng((s.getPosition()));
+		final String address = s.getAddress();
+		final String operator = s.getOperator();
 
 		final MarkerOptions markerOptions = MarkerOptions.create();
 		markerOptions.setPosition(position);
+		if (markerColour.equals("green")) markerOptions.setIcon(GREEN_MARKER);
 		final Marker m = Marker.create(markerOptions);
 		m.setMap(gMap);
 		m.addClickListener(new ClickHandler(){
 
 			@Override
 			public void handle(MouseEvent event) {
-				selectedStation = s;
-				showRoute(position);
+				selectedMarker = m;
+				selectedStation = station;
+				showRoute(station);
 				infoPanel.setText(0, 0, address);
 				infoPanel.setText(1, 0, operator);
-				
+				displayReviews(station.getReviews());
 			}});
+	}
+
+	private void displayReviews(ArrayList<Review> reviews) {
+		Integer rating = 0;
+		for (int i = 0; i < reviews.size(); i++) {
+			rating += reviews.get(i).getRating();
+		}
+		rating /= reviews.size();
+		String text = rating.toString();
+
+		for (int i = 0; i < reviews.size(); i++) {
+			text = text.concat("\n" + reviews.get(i).getComment());
+		}
+		infoPanel.setText(2, 0, text);
 	}
 
 	private void displayMap(FormPanel formPanel) {
@@ -440,23 +504,57 @@ public class ChargingStationFinderApp implements EntryPoint {
 		gMap.setCenter(this.userPosition);
 		initializeStations();
 		initializeaddNewSymbolTextBox();
-		initializeaddNewSymbolTextBox1();
+		initializeAddAddressButton1();
 		rend.setMap(gMap);
+	}
+
+	private void initializeAddAddressButton1() {
+		addAddressButton1.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				try {
+					stationService.getUserEmailAddress(new AsyncCallback<String>(){
+
+						@Override
+						public void onFailure(Throwable caught) {}
+
+						@Override
+						public void onSuccess(String result) {
+							selectedStation.addUserEmailAddress(result);
+							stationService.updateStation(selectedStation, new AsyncCallback<Void>(){
+
+								@Override
+								public void onFailure(Throwable caught) {
+								}
+
+								@Override
+								public void onSuccess(Void result) {
+									selectedMarker.setIcon(GREEN_MARKER);
+								}});
+							
+						}});
+				} catch (NotLoggedInException e) {
+					e.printStackTrace();
+				}
+				
+			}});
+		
 	}
 
 	private void handleError(Throwable error) {
 
-	    Window.alert(error.getMessage());
-	    if (error instanceof NotLoggedInException) {
-	      Window.Location.replace(loginInfo.getLogoutUrl());
-	    }
-	  }
-	
-	private void showRoute(LatLng dest) {
-		
+		Window.alert(error.getMessage());
+		if (error instanceof NotLoggedInException) {
+			Window.Location.replace(loginInfo.getLogoutUrl());
+		}
+	}
+
+	private void showRoute(Station dest) {
+
 		DirectionsRequest req = DirectionsRequest.create();
 		req.setOrigin(userPosition);
-		req.setDestination(dest);
+		req.setDestination(LatLngConverter.toLatLng((dest.getPosition())));
 		req.setTravelMode(TravelMode.DRIVING);
 
 		DirectionsService serv = DirectionsService.create();
@@ -470,37 +568,34 @@ public class ChargingStationFinderApp implements EntryPoint {
 			}
 		});
 	}
-	
-	private LatLng findNearestStation(LatLng from) throws NoStationFoundException {
+
+
+	private Station findNearestStation(LatLng from) throws NoStationFoundException {
 		double minDistance = Double.POSITIVE_INFINITY;
-		LatLng nearest = null;
-		String[] minStation = null;
-		for (String[] s : stations) {
-			LatLng to = LatLng.create(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
-			double distance = Spherical.computeDistanceBetween(from, to);
-			
-			if (/*setting.radius.radius() >= distance &&*/ distance < minDistance) {
-				nearest = to;
+		Station nearest = null;
+		for (Station s : stations) {
+			double distance = Spherical.computeDistanceBetween(from, LatLngConverter.toLatLng((s.getPosition())));
+			if (distance < minDistance) {
+				nearest = s;
 				minDistance = distance;
-				minStation = s;
 			}
 		}
 		if (minDistance == Double.POSITIVE_INFINITY) {
 			throw new NoStationFoundException();
-			}
-		
-		resetTweetButton(minStation);
+		}
+
+		resetTweetButton(nearest);
 		return nearest;
 	}
 
-	private void resetTweetButton(String[] minStation) {
+	private void resetTweetButton(Station minStation) {
 		JQuery.select("#tweetBtn iframe").remove();
 		Element e = DOM.createAnchor();
 		e.addClassName("twitter-share-button");
 		e.setAttribute("href", "http://twitter.com/share");
 		e.setAttribute("data-url", "http://2-dot-selinatron.appspot.com/");
 		e.setAttribute("data-text", "Hey guys, I'm going to charge my car at "
-				       + minStation[2] + ", " + minStation[3] + ". Use this awesome app if you want to charge yours too!");
+				+ minStation.getOperator() + ", " + minStation.getAddress() + ". Use this awesome app if you want to charge yours too!");
 		JQuery.select("#tweetBtn").append(e);
 		
 		refreshTwitterButtons();

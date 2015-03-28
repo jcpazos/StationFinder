@@ -39,6 +39,13 @@ h1 {
   margin: 15px 6px 6px;
 }
 
+.menu {
+	position: absolute;
+	left: 10px;
+	top: 14%;
+	width: 120px;
+	height: 10px
+}
 
 .map {
 	position: absolute;
