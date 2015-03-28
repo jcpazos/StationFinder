@@ -1,55 +1,16 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-06D55CCF48BECECAEFD18BEA2C20C80C.cache.js
-user.agent gecko1_8
-
-14D3E11D2B7D6DEEF80DAA7F1740E0F0.cache.js
-user.agent ie10
-
-4CBE49526FCE57010FA7576299934F6A.cache.js
-user.agent ie8
-
-A24E4F6D773D5585F05A9F750A102397.cache.js
-=======
-01A0A352D82078F899C9072E38C0EE6C.cache.js
-user.agent gecko1_8
-
-3B504F726CA4709EB0763D048DB9191F.cache.js
->>>>>>> 38834c6fb557331399f56b363c58e0564af2109e
-=======
-3D77311CABD87BBCE3550E8E25C21822.cache.js
-user.agent ie10
-
-ABA5DE9DB2F0DAAD95A200E42F632DF6.cache.js
-user.agent ie8
-
-C84E66CD783AC9590752EB1D7220CDB1.cache.js
-user.agent safari
-
-DD357C3B1BE84BE79B2B72CA47E9AFD0.cache.js
-user.agent gecko1_8
-
-F48477643A3EF8EE35849EF41249B5A7.cache.js
-<<<<<<< HEAD
->>>>>>> 2f6b46c0bf2acb80acabb1c6db9a5ce1d5e69f20
+076DCF5461C531815D5A1960462AEA23.cache.js
 user.agent ie9
 
-DED93A356CFA65A155846F001EBF2262.cache.js
-user.agent safari
-
-Devmode:devmode.js
-=======
->>>>>>> branch 'master' of https://github.com/CPSC310-2014W2/Team-A
-user.agent ie9
-
-428CDFB89B99A0DAB4D171615BCBE7B7.cache.js
-user.agent safari
-
-7DC8B61BA8D999CA8C539802F486F011.cache.js
-user.agent ie8
-
-F915E0D42BB4020A939CEDA30B7411B5.cache.js
+1774BD5B92C03402C027805C158D700B.cache.js
 user.agent ie10
 
+2771B6337CFDEFD28588B9E47AFE019D.cache.js
+user.agent safari
+
+C1B86BE2CD777FA4A0D6A4C7E75498D5.cache.js
+user.agent gecko1_8
+
+FB31D2FABF687E8F8FD5E8CD5A223FC2.cache.js
+user.agent ie8
+
 Devmode:devmode.js
->>>>>>> 38834c6fb557331399f56b363c58e0564af2109e

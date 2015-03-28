@@ -9,6 +9,7 @@ public class LatLngConverter {
 	}
 	
 	public static MyLatLng toMyLatLng(LatLng pos) {
-		return new MyLatLng(pos.lat(), pos.lng());
+		return new MyLatLng(pos.lat(),pos.lng());
 	}
+
 }

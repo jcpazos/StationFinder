@@ -3,6 +3,7 @@ package com.google.gwt.chargingstationfinder.shared;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.IdentityType;
@@ -35,6 +36,8 @@ public class Station implements Serializable{
 	private ArrayList<Date> dates;
 	@Persistent
 	private ArrayList<String> users;
+	@Persistent
+	private HashSet<String> favouriteUserEmails;
 	
 	public Station() {
 	}
@@ -47,6 +50,7 @@ public class Station implements Serializable{
 		ratings = new ArrayList<Integer>();
 		dates = new ArrayList<Date>();
 		users = new ArrayList<String>();
+		favouriteUserEmails = new HashSet<String>();
 	}
 	
 	public void setId(Long id) {
@@ -149,6 +153,10 @@ public class Station implements Serializable{
 	public ArrayList<String> getUsers() {
 		return users;
 	}
+	
+	public HashSet<String> getUserEmails() {
+		return this.favouriteUserEmails;
+	}
 
 	public void setComments(ArrayList<String> comments) {
 		this.comments = comments;
@@ -164,6 +172,11 @@ public class Station implements Serializable{
 
 	public void setUsers(ArrayList<String> users) {
 		this.users = users;
+	}
+
+	public void addUserEmailAddress(String result) {
+		favouriteUserEmails.add(result);
+		
 	}
 
 }

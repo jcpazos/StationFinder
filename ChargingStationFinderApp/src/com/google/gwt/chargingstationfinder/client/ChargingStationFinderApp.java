@@ -93,14 +93,17 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private VerticalPanel controlPanel = new VerticalPanel();
 	private FlexTable infoPanel = new FlexTable();
 	private Marker userMarker = Marker.create();
+	private Marker selectedMarker;
 	private DirectionsRenderer rend = DirectionsRenderer.create();
 	private Setting setting = new Setting();
 	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.png");
 	private Button postReviewButton = new Button("Post Review");
 	private TextArea commentBox = new TextArea();
+	private MarkerImage GREEN_MARKER = MarkerImage.create("images/icon_green.png");
 	private Station selectedStation;
 	private HorizontalPanel menuBar = new HorizontalPanel();
 	private MenuBar settingMenu= new MenuBar();
+	private String userEmailAddress;
 
 	//	private String[][] favouriteStations = new String[23][4];
 	private int index;
@@ -161,7 +164,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		// Assemble control panel.
 		controlPanel.add(addPanel);
 		controlPanel.add(lastUpdatedLabel);
-		initializeAddStationsButton(); 
+		initializeAddStationsButton();
 		controlPanel.addStyleName("control");
 
 		infoPanel.setText(0,0,"Address:");
@@ -278,7 +281,25 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onSuccess(List<Station> result) {
 				if (result != null) {
 					stations = result;
-					displayStations();
+					try {
+						stationService.getUserEmailAddress(new AsyncCallback<String>(){
+
+							@Override
+							public void onFailure(Throwable caught) {
+								logger.log(Level.SEVERE, "fail");
+								
+							}
+
+							@Override
+							public void onSuccess(String result) {
+								userEmailAddress = result;
+								displayStations();
+								
+							}});
+					} catch (NotLoggedInException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			}});
 	}
@@ -405,8 +426,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			}});	
 
-	}
-
+	}	
 
 	protected void addStations(List<Station> stations) throws InvalidReviewException {
 		this.stations = stations;
@@ -424,19 +444,20 @@ public class ChargingStationFinderApp implements EntryPoint {
 				handleError(caught);
 			}
 			public void onSuccess(Void result) {
-				displayStation(station);
+				displayStation(station, null);
 			}
 		});
 	}
 
 	private void displayStations() {
 		for (Station s: stations) {
-			displayStation(s);
+			if (s.getUserEmails().contains(userEmailAddress)) displayStation(s, "green");
+			else displayStation(s, null);
 		}
 	}
 
 
-	private void displayStation(Station s) {
+	private void displayStation(Station s, String markerColour) {
 		final Station station = s;
 		final LatLng position = LatLngConverter.toLatLng((s.getPosition()));
 		final String address = s.getAddress();
@@ -444,12 +465,14 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 		final MarkerOptions markerOptions = MarkerOptions.create();
 		markerOptions.setPosition(position);
+		if (markerColour.equals("green")) markerOptions.setIcon(GREEN_MARKER);
 		final Marker m = Marker.create(markerOptions);
 		m.setMap(gMap);
 		m.addClickListener(new ClickHandler(){
 
 			@Override
 			public void handle(MouseEvent event) {
+				selectedMarker = m;
 				selectedStation = station;
 				showRoute(station);
 				infoPanel.setText(0, 0, address);
@@ -489,7 +512,42 @@ public class ChargingStationFinderApp implements EntryPoint {
 		gMap.setCenter(this.userPosition);
 		initializeStations();
 		initializeaddNewSymbolTextBox();
+		initializeAddAddressButton1();
 		rend.setMap(gMap);
+	}
+
+	private void initializeAddAddressButton1() {
+		addAddressButton1.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+
+			@Override
+			public void onClick(ClickEvent event) {
+				try {
+					stationService.getUserEmailAddress(new AsyncCallback<String>(){
+
+						@Override
+						public void onFailure(Throwable caught) {}
+
+						@Override
+						public void onSuccess(String result) {
+							selectedStation.addUserEmailAddress(result);
+							stationService.updateStation(selectedStation, new AsyncCallback<Void>(){
+
+								@Override
+								public void onFailure(Throwable caught) {
+								}
+
+								@Override
+								public void onSuccess(Void result) {
+									selectedMarker.setIcon(GREEN_MARKER);
+								}});
+							
+						}});
+				} catch (NotLoggedInException e) {
+					e.printStackTrace();
+				}
+				
+			}});
+		
 	}
 
 	private void handleError(Throwable error) {

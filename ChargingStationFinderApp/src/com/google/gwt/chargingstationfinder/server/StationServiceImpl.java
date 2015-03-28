@@ -65,6 +65,7 @@ StationService {
 			pm.close();
 		}
 	}
+	  
 
 
 	public List<Station> getStations() throws NotLoggedInException {
@@ -112,19 +113,6 @@ StationService {
 		return PMF.getPersistenceManager();
 	}
 
-	public void addFavouriteStation(double latitude, double longitude,String operator, String address, User user) 
-			throws NotLoggedInException, NotAdminException {
-		checkLoggedIn();
-		checkIsAdmin();
-		PersistenceManager pm = getPersistenceManager();
-		try {
-			pm.makePersistent(new FavouriteStations(latitude, longitude, operator, address, user));
-		} finally {
-			pm.close();
-
-		}
-
-	}
 
 	public void removeFavouriteStation(String address) throws NotLoggedInException {
 		checkLoggedIn();
@@ -148,36 +136,16 @@ StationService {
 		}
 	}
 
-	//	  public String[][] getFavouriteStations() throws NotLoggedInException {
-	//		    checkLoggedIn();
-	//		    PersistenceManager pm = getPersistenceManager();
-	//		    String[][] returnVal = null;
-	//		    try {
-	//		      Query q = pm.newQuery(FavouriteStations.class, "user==u");
-	//		      q.declareParameters("com.google.appengine.api.users.User u");
-	//		      List<Station> stations = (List<Station>) q.execute();
-	//		      int i=0;
-	//		      if (stations.size() == 0) return null;
-	//		      if (stations.get(0) == null) return null;
-	//		      returnVal = new String[stations.size()][4];
-	//		      for (Station station : stations) {
-	//		        	  returnVal[i][0] = Double.toString(station.getLatitude());
-	//		        	  returnVal[i][1] = Double.toString(station.getLongitude());
-	//		        	  returnVal[i][2] = station.getOperator();
-	//		        	  returnVal[i][3] = station.getAddress(); 
-	//		        	  i++;
-	//		          }
-	//		    } finally {
-	//		      pm.close();
-	//		      
-	//		    }
-	//		    return returnVal;
-	//		  }
-
 
 
 	public void checkIsAdmin() throws NotAdminException {
 		if (!UserServiceFactory.getUserService().isUserAdmin())
 			throw new NotAdminException("User is not an admin");
+	}
+
+
+	@Override
+	public String getUserEmailAddress() throws NotLoggedInException {
+		return getUser().getEmail();
 	}
 }

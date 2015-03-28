@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.google.gwt.chargingstationfinder.client.LatLngConverter;
 import com.google.gwt.chargingstationfinder.client.ParsingService;
 import com.google.gwt.chargingstationfinder.client.StationService;
 import com.google.gwt.chargingstationfinder.shared.MyLatLng;
@@ -22,7 +21,6 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
-import com.google.maps.gwt.client.LatLng;
 
 public class ParsingServiceImpl extends RemoteServiceServlet implements
 ParsingService {
@@ -43,17 +41,19 @@ ParsingService {
 			String line = br.readLine();
 			stationInfo = line.split(",");
 			if (!isValidInput(stationInfo)) return null;
-			int i =0;
 			while ((line = br.readLine()) != null) {
 
 				stationInfo = line.split(",");
 				stations.add(toStation(stationInfo));
-				i++;
 			}
 		} catch (IOException e) {
 			return null;
 		}
 		return stations;
+	}
+	private Station toStation(String[] s) {
+		MyLatLng pos = new MyLatLng(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
+		return new Station(pos,s[2],s[3]);
 	}
 	private boolean isValidInput(String[] station) {
 		if (station[0].equals("LATITUDE") && station[1].equals("LONGITUDE") && station[2].equals("LOT_OPERATOR")
@@ -61,8 +61,6 @@ ParsingService {
 		return false;
 	}
 	
-	private Station toStation(String[] s) {
-		MyLatLng pos = new MyLatLng(Double.parseDouble(s[0]), Double.parseDouble(s[1]));
-		return new Station(pos, s[2], s[3]);
-	}
+	
+
 }
