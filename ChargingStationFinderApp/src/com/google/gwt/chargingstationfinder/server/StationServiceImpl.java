@@ -42,7 +42,7 @@ StationService {
 			pm.close();
 		}
 	}
-
+			
 
 	public void removeStation(String address) throws NotLoggedInException {
 		checkLoggedIn();
