@@ -119,6 +119,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	public void onModuleLoad() {
 
 		// Check login status using login service.
+		RootPanel.get("fb-root").setVisible(false);
 		LoginServiceAsync loginService = GWT.create(LoginService.class);
 		loginService.login(GWT.getHostPageBaseURL(), new AsyncCallback<LoginInfo>() {
 			public void onFailure(Throwable error) {
@@ -147,6 +148,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 	private void loadStationFinderApp() {
 		RootPanel.get("tweetBtn").getElement().getStyle().setProperty("visibility", "visible");
+		RootPanel.get("fb-root").setVisible(true);
+		RootPanel.get("btn-group").getElement().getStyle().setProperty("visibility", "visible");
 		// Set up sign out hyperlink.
 		signOutLink.setHref(loginInfo.getLogoutUrl());
 		signOutLink.addStyleName("signOut");
