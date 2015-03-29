@@ -179,4 +179,9 @@ public class Station implements Serializable{
 		
 	}
 
+	public void removeUserEmailAddress(String result) {
+		favouriteUserEmails.remove(result);
+		
+	}
+
 }

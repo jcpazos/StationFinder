@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.maps.gwt.client.DirectionsRenderer;
@@ -96,14 +97,15 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private DirectionsRenderer rend = DirectionsRenderer.create();
 	private Setting setting = new Setting();
 	private MarkerImage BLUE_MARKER = MarkerImage.create("images/marker.png");
+	private Button postReviewButton = new Button("Post Review");
+	private TextArea commentBox = new TextArea();
 	private MarkerImage GREEN_MARKER = MarkerImage.create("images/icon_green.png");
-	private Button postReviewButton = new Button("Post");
-	private TextBox commentBox = new TextBox();
 	private Station selectedStation;
 	private HorizontalPanel menuBar = new HorizontalPanel();
 	private MenuBar settingMenu= new MenuBar();
 	private String userEmailAddress;
-	private int favouriteStationCounter = 0;
+	private final String removeStationText = "Remove Favourite Station";
+	private  ArrayList<Station> favouriteStations = new ArrayList<Station>();
 
 	//	private String[][] favouriteStations = new String[23][4];
 	private int index;
@@ -118,6 +120,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	public void onModuleLoad() {
 
 		// Check login status using login service.
+		RootPanel.get("fb-root").setVisible(false);
 		LoginServiceAsync loginService = GWT.create(LoginService.class);
 		loginService.login(GWT.getHostPageBaseURL(), new AsyncCallback<LoginInfo>() {
 			public void onFailure(Throwable error) {
@@ -146,6 +149,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 	private void loadStationFinderApp() {
 		RootPanel.get("tweetBtn").getElement().getStyle().setProperty("visibility", "visible");
+		RootPanel.get("fb-root").setVisible(true);
+		RootPanel.get("btn-group").getElement().getStyle().setProperty("visibility", "visible");
 		// Set up sign out hyperlink.
 		signOutLink.setHref(loginInfo.getLogoutUrl());
 		signOutLink.addStyleName("signOut");
@@ -157,7 +162,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		addPanel.add(addAddressButton);
 		//addPanel.add(nearestStationTextBox);
 		addPanel.addStyleName("addressInput");
-		
+
 		addPanel.add(addAddressButton1);
 		addPanel.addStyleName("addressInput1");
 
@@ -170,7 +175,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		infoPanel.setText(0,0,"Address:");
 		infoPanel.setText(1,0,"Operator:");
 		infoPanel.setText(2,0,"Rating:");
-		infoPanel.setText(3,0,"Radius is now set to be " + setting.radius.getName());
+		//infoPanel.setText(3,0,"Radius is now set to be " + setting.radius.getName());
 		
 		menuBar.addStyleName("menu");
 		final MenuBar radiusMenu = new MenuBar(true);
@@ -180,7 +185,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				public void execute() {
 					setting.setRadius(radius);
 					settingMenu.setAnimationEnabled(true);
-					infoPanel.setText(3, 0, "Radius is now set to be " + setting.radius.getName());
+					//infoPanel.setText(3, 0, "Radius is now set to be " + setting.radius.getName());
 				}
 			});
 		}
@@ -193,7 +198,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 		infoPanel.getCellFormatter().addStyleName(0, 0, "address");
 		infoPanel.getCellFormatter().addStyleName(1, 0, "operator");
 		infoPanel.getCellFormatter().addStyleName(2, 0, "rating");
-
+		infoPanel.getCellFormatter().addStyleName(3, 0, "commentBoxCell");
+		infoPanel.getCellFormatter().addStyleName(4, 0, "reviewButtonCell");
+		
 		RootPanel.get().add(signOutLink);
 		RootPanel.get("control").add(controlPanel);
 		RootPanel.get("info").add(infoPanel);
@@ -209,8 +216,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private void initializeReviewFunction() {
 		postReviewButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 			public void onClick(ClickEvent e){
-				String comment = newSymbolTextBox.getText();
-				newSymbolTextBox.setText("");
+				String comment = commentBox.getText();
+				commentBox.setText("");
 				Review r = new Review(4, comment);
 				try {
 					selectedStation.addReview(r);
@@ -229,8 +236,13 @@ public class ChargingStationFinderApp implements EntryPoint {
 				});
 			}
 		});
-		controlPanel.add(postReviewButton);
-		//		controlPanel.add(commentBox);
+		
+		commentBox.addStyleDependentName("comment");
+		commentBox.getElement().setPropertyString("placeholder", "Share Your Experience at This Station");
+		postReviewButton.addStyleDependentName("review");
+		
+		infoPanel.setWidget(3, 0, commentBox);
+		infoPanel.setWidget(4, 0, postReviewButton);
 	}
 
 	private void initializeAddStationsButton() {
@@ -286,14 +298,15 @@ public class ChargingStationFinderApp implements EntryPoint {
 							@Override
 							public void onSuccess(String result) {
 								userEmailAddress = result;
-								for (Station s: stations)
-							    if (s.getUserEmails().contains(result))favouriteStationCounter++;
-								logger.log(Level.SEVERE, "favourite stations: " + favouriteStationCounter);
+								for (Station s : stations) {
+									if (s.getUserEmails().contains(result)) {
+										favouriteStations.add(s);
+									}
+								}
 								displayStations();
 								
 							}});
 					} catch (NotLoggedInException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -470,9 +483,11 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void handle(MouseEvent event) {
 				selectedMarker = m;
 				selectedStation = station;
+				addAddressButton1.setText("Add Favourite Station");
+				if (favouriteStations.contains(selectedStation)) addAddressButton1.setText(removeStationText);
 				showRoute(station);
-				infoPanel.setText(0, 0, address);
-				infoPanel.setText(1, 0, operator);
+				infoPanel.setText(0, 0, "Address " + address);
+				infoPanel.setText(1, 0, "Operator " + operator);
 				displayReviews(station.getReviews());
 			}});
 	}
@@ -525,9 +540,23 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 						@Override
 						public void onSuccess(String result) {
-							selectedStation.addUserEmailAddress(result);
-							if (favouriteStationCounter < 10) {
-						    favouriteStationCounter++;
+							if (addAddressButton1.getText().equals(removeStationText)) {
+								favouriteStations.remove(selectedStation);
+								selectedStation.removeUserEmailAddress(result);
+								selectedMarker.setIcon("http://maps.google.com/mapfiles/ms/icons/red-dot.png");
+							}
+
+							else if (favouriteStations.size() == 10) {
+								Window.alert("You can't have more than 10 favourite station!");
+								return;
+							}
+
+							else {
+								favouriteStations.add(selectedStation);
+								selectedStation.addUserEmailAddress(result);
+								selectedMarker.setIcon(GREEN_MARKER);
+							}
+
 							stationService.updateStation(selectedStation, new AsyncCallback<Void>(){
 
 								@Override
@@ -536,19 +565,14 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 								@Override
 								public void onSuccess(Void result) {
-									selectedMarker.setIcon(GREEN_MARKER);
 								}});
-							
-						}
-							else Window.alert ("You can't have more than 10 favourite stations!");
 						}});
-					
 				} catch (NotLoggedInException e) {
 					e.printStackTrace();
 				}
-				
+
 			}});
-		
+
 	}
 
 	private void handleError(Throwable error) {
@@ -606,9 +630,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 		e.setAttribute("data-text", "Hey guys, I'm going to charge my car at "
 				+ minStation.getOperator() + ", " + minStation.getAddress() + ". Use this awesome app if you want to charge yours too!");
 		JQuery.select("#tweetBtn").append(e);
-		
+
 		refreshTwitterButtons();
-		
+
 	}
 
 	private static native void refreshTwitterButtons() /*-{
