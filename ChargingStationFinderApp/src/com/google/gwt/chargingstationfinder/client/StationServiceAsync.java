@@ -14,7 +14,6 @@ public interface StationServiceAsync {
 	public void getStations(AsyncCallback<List<Station>> async);
 	public void checkIsAdmin(AsyncCallback<Void> async) throws NotAdminException;
 	public void getUserEmailAddress(AsyncCallback<String> async) throws NotLoggedInException;
-	  public void removeFavouriteStation(String address,AsyncCallback<Void> async) throws NotLoggedInException;
 	public void updateStation(Station selectedStation, AsyncCallback<Void> async);
 
 }

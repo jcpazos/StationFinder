@@ -103,6 +103,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private HorizontalPanel menuBar = new HorizontalPanel();
 	private MenuBar settingMenu= new MenuBar();
 	private String userEmailAddress;
+	private int favouriteStationCounter = 0;
 
 	//	private String[][] favouriteStations = new String[23][4];
 	private int index;
@@ -285,6 +286,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 							@Override
 							public void onSuccess(String result) {
 								userEmailAddress = result;
+								for (Station s: stations)
+							    if (s.getUserEmails().contains(result))favouriteStationCounter++;
+								logger.log(Level.SEVERE, "favourite stations: " + favouriteStationCounter);
 								displayStations();
 								
 							}});
@@ -522,6 +526,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 						@Override
 						public void onSuccess(String result) {
 							selectedStation.addUserEmailAddress(result);
+							if (favouriteStationCounter < 10) {
+						    favouriteStationCounter++;
 							stationService.updateStation(selectedStation, new AsyncCallback<Void>(){
 
 								@Override
@@ -533,7 +539,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 									selectedMarker.setIcon(GREEN_MARKER);
 								}});
 							
+						}
+							else Window.alert ("You can't have more than 10 favourite stations!");
 						}});
+					
 				} catch (NotLoggedInException e) {
 					e.printStackTrace();
 				}
@@ -575,7 +584,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		Station nearest = null;
 		for (Station s : stations) {
 			double distance = Spherical.computeDistanceBetween(from, LatLngConverter.toLatLng((s.getPosition())));
-			if (distance < minDistance) {
+			if (distance < minDistance && distance <= setting.radius.radius()) {
 				nearest = s;
 				minDistance = distance;
 			}
