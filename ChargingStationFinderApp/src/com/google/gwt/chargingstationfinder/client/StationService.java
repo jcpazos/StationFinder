@@ -15,7 +15,7 @@ public interface StationService extends RemoteService {
   public void removeStation(String address) throws NotLoggedInException;
   public List<Station> getStations() throws NotLoggedInException;
   public void removeFavouriteStation(String address) throws NotLoggedInException;
-  public String getUserEmailAddress() throws NotLoggedInException;
+  public String getUserName() throws NotLoggedInException;
   public void updateStation(Station s);
   public void checkIsAdmin() throws NotAdminException;
 }

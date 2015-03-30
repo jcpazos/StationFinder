@@ -144,8 +144,11 @@ StationService {
 	}
 
 
-	@Override
-	public String getUserEmailAddress() throws NotLoggedInException {
-		return getUser().getEmail();
+//	public String getUserEmailAddress() throws NotLoggedInException {
+//		return getUser().getEmail();
+//	}
+	
+	public String getUserName() throws NotLoggedInException {
+		return getUser().getNickname();
 	}
 }

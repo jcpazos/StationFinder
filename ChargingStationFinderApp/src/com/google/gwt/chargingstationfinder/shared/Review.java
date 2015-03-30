@@ -18,8 +18,10 @@ public class Review implements Serializable {
 	@PrimaryKey
 	@Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
 	private Long id;
+//	@Persistent
+//	private String userEmail;
 	@Persistent
-	private String user;
+	private String userName;
 	@Persistent
 	private Date date;
 	@Persistent
@@ -30,20 +32,36 @@ public class Review implements Serializable {
 	public Review(int rating, String comment) {
 		this.rating = rating;
 		this.comment = comment;
-
 	}
+
+	
+	public void setComment(String comment) throws InvalidReviewException {
+		if (comment.length() > 200) {
+			throw new InvalidReviewException("comment exceeds length");
+		}
+		this.comment = comment;
+	}
+
 
 	public Long getId() {
 		return this.id;
 	}
 
-	public String getUser() {
-		return user;
+	public String getUserName() {
+		return userName;
 	}
 
-	public void setUser(String user) {
-		this.user = user;
+	public void setUserName(String userName) {
+		this.userName = userName;
 	}
+
+//	public String getUserEmail() {
+//		return userEmail;
+//	}
+
+//	public void setUserEmail(String user) {
+//		this.userEmail = user;
+//	}
 
 	public Date getDate() {
 		return date;

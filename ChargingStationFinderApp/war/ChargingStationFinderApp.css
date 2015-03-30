@@ -111,7 +111,31 @@ h1 {
 .rating {
 	font-family: Arial, sans-serif, serif;
 	font-weight: bold;
-	height: 50%;
+	height: 30%;
+	border: medium solid black;
+	background-color: white;
+	opacity: 0.4;
+	filter: alpha(opacity = 60);
+}
+
+.scrollBar {
+	height: 250%;
+}
+
+.autoLineBreak {
+	word-wrap: break-word;
+}
+
+.padding {
+	padding: 5px 0px 5px 0px;
+}
+
+.bold {
+	font-weight: bold !important;
+}
+
+.narrow {
+	height: 10%;
 	border: medium solid black;
 	background-color: white;
 	opacity: 0.4;

@@ -34,10 +34,12 @@ public class Station implements Serializable{
 	private ArrayList<Integer> ratings;
 	@Persistent
 	private ArrayList<Date> dates;
+//	@Persistent
+//	private ArrayList<String> userEmails;
 	@Persistent
-	private ArrayList<String> users;
+	private HashSet<String> favouriteUsers;
 	@Persistent
-	private HashSet<String> favouriteUserEmails;
+	private ArrayList<String> userNames;
 	
 	public Station() {
 	}
@@ -49,8 +51,9 @@ public class Station implements Serializable{
 		comments = new ArrayList<String>();
 		ratings = new ArrayList<Integer>();
 		dates = new ArrayList<Date>();
-		users = new ArrayList<String>();
-		favouriteUserEmails = new HashSet<String>();
+//		userEmails = new ArrayList<String>();
+		userNames = new ArrayList<String>();
+		favouriteUsers = new HashSet<String>();
 	}
 	
 	public void setId(Long id) {
@@ -114,14 +117,29 @@ public class Station implements Serializable{
 
 	public void addReview(Review r) throws InvalidReviewException {
 		if (r.getRating() < 1 || r.getRating() > 5) {
-			throw new InvalidReviewException("Rating should be 1-5");
-		}else if (r.getComment().isEmpty() || r.getComment().length() > 50) {
-			throw new InvalidReviewException("Comment should contain 1-50 characters");
+			throw new InvalidReviewException("Please select a rating for this stating.");
+		}else if (r.getComment().isEmpty() || r.getComment().length() > 200) {
+			throw new InvalidReviewException("Comment should be within 200 characters");
+		}else if (userNames.contains(r.getUserName())) {
+			throw new InvalidReviewException("You can only review a station once; However, "
+					+ "You may edit your previous review by clicking the edit link beside it.");
 		}else {
 			comments.add(r.getComment());
 			ratings.add(r.getRating());
 			dates.add(r.getDate());
-			users.add(r.getUser());
+			userNames.add(r.getUserName());
+		}
+	}
+	
+	public void removeReview(Review r) {
+		for (int i = 0; i < userNames.size(); i++) {
+			if (userNames.get(i).equals(r.getUserName())) {
+				userNames.remove(i);
+				comments.remove(i);
+				dates.remove(i);
+				ratings.remove(i);
+				break;
+			}
 		}
 	}
 	
@@ -129,7 +147,8 @@ public class Station implements Serializable{
 		ArrayList<Review> reviews = new ArrayList<Review>();
 		for (int i = 0; i < comments.size(); i++) {
 			Review r = new Review(ratings.get(i), comments.get(i));
-			r.setUser(users.get(i));
+//			r.setUserEmail(userEmails.get(i));
+			r.setUserName(userNames.get(i));
 			r.setDate(dates.get(i));
 			reviews.add(r);
 		}
@@ -150,12 +169,12 @@ public class Station implements Serializable{
 		return dates;
 	}
 
-	public ArrayList<String> getUsers() {
-		return users;
-	}
+//	public ArrayList<String> getUserEmails() {
+//		return userEmails;
+//	}
 	
-	public HashSet<String> getUserEmails() {
-		return this.favouriteUserEmails;
+	public HashSet<String> getFavouriteUsers() {
+		return this.favouriteUsers;
 	}
 
 	public void setComments(ArrayList<String> comments) {
@@ -170,12 +189,20 @@ public class Station implements Serializable{
 		this.dates = dates;
 	}
 
-	public void setUsers(ArrayList<String> users) {
-		this.users = users;
+//	public void setUserEmails(ArrayList<String> userEmails) {
+//		this.userEmails = userEmails;
+//	}
+
+	public ArrayList<String> getUserNames() {
+		return userNames;
 	}
 
-	public void addUserEmailAddress(String result) {
-		favouriteUserEmails.add(result);
+	public void setUserNames(ArrayList<String> userNames) {
+		this.userNames = userNames;
+	}
+
+	public void addFavouriteUser(String result) {
+		favouriteUsers.add(result);
 		
 	}
 

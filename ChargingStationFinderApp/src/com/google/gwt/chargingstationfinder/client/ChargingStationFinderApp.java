@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.chargingstationfinder.shared.MyLatLng;
 import com.google.gwt.chargingstationfinder.shared.Review;
 import com.google.gwt.chargingstationfinder.shared.Station;
@@ -18,6 +19,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.geolocation.client.Geolocation;
 import com.google.gwt.geolocation.client.Position;
 import com.google.gwt.geolocation.client.PositionError;
+import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
@@ -28,10 +30,14 @@ import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -103,8 +109,22 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private Station selectedStation;
 	private HorizontalPanel menuBar = new HorizontalPanel();
 	private MenuBar settingMenu= new MenuBar();
-	private String userEmailAddress;
+	private String user;
 	private int favouriteStationCounter = 0;
+	private ScrollPanel commentScrollArea = new ScrollPanel();
+	private Anchor edit = new Anchor("<edit>");
+	private DialogBox editBox;
+	private Grid editBoxGrid;
+	private Button closeEditBoxButton;
+	private Button submitEditButton;
+	private RichTextArea editBoxInput;
+	private Review reviewToBeEdited;
+	private Anchor delete = new Anchor("<delete>");
+	private DialogBox deleteDialog;
+	private Button confirmDeletion;
+	private Button cancelDeletion;
+	private ListBox ratingBox = new ListBox();
+	private HorizontalPanel ratingSelectionPanel = new HorizontalPanel();
 
 	//	private String[][] favouriteStations = new String[23][4];
 	private int index;
@@ -128,7 +148,22 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onSuccess(LoginInfo result) {
 				loginInfo = result;
 				if(loginInfo.isLoggedIn()) {
+					try {
+						stationService.getUserName(new AsyncCallback<String>() {
 
+							@Override
+							public void onFailure(Throwable caught) {
+								logger.log(Level.SEVERE, "fail");
+							}
+
+							@Override
+							public void onSuccess(String result) {
+								user = result;
+							}
+						});
+					} catch (NotLoggedInException e) {
+						e.printStackTrace();
+					}
 					loadStationFinderApp();
 				} else {
 					loadLogin();
@@ -170,9 +205,11 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 		infoPanel.setText(0,0,"Address:");
 		infoPanel.setText(1,0,"Operator:");
-		infoPanel.setText(2,0,"Rating:");
-		infoPanel.setText(3,0,"Radius is now set to be " + setting.radius.getName());
-		
+		//		commentArea.addStyleName("scrollBar");
+		commentScrollArea.setHeight("150px");
+		infoPanel.setWidget(3, 0, commentScrollArea);
+		//		infoPanel.setText(3,0,"Radius is now set to be " + setting.radius.getName());
+
 		menuBar.addStyleName("menu");
 		final MenuBar radiusMenu = new MenuBar(true);
 		for (final RadiusSetting radius: setting.radius.getClass().getEnumConstants()) {
@@ -181,7 +218,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				public void execute() {
 					setting.setRadius(radius);
 					settingMenu.setAnimationEnabled(true);
-					infoPanel.setText(3, 0, "Radius is now set to be " + setting.radius.getName());
+					//					infoPanel.setText(3, 0, "Radius is now set to be " + setting.radius.getName());
 				}
 			});
 		}
@@ -193,10 +230,12 @@ public class ChargingStationFinderApp implements EntryPoint {
 		infoPanel.addStyleName("info");
 		infoPanel.getCellFormatter().addStyleName(0, 0, "address");
 		infoPanel.getCellFormatter().addStyleName(1, 0, "operator");
-		infoPanel.getCellFormatter().addStyleName(2, 0, "rating");
-		infoPanel.getCellFormatter().addStyleName(3, 0, "commentBoxCell");
-		infoPanel.getCellFormatter().addStyleName(4, 0, "reviewButtonCell");
-		
+		infoPanel.getCellFormatter().addStyleName(2, 0, "narrow");
+		infoPanel.getCellFormatter().addStyleName(3, 0, "rating");
+		infoPanel.getCellFormatter().addStyleName(4, 0, "narrow");
+		infoPanel.getCellFormatter().addStyleName(5, 0, "commentBoxCell");
+		infoPanel.getCellFormatter().addStyleName(6, 0, "reviewButtonCell");
+
 		RootPanel.get().add(signOutLink);
 		RootPanel.get("control").add(controlPanel);
 		RootPanel.get("info").add(infoPanel);
@@ -213,13 +252,17 @@ public class ChargingStationFinderApp implements EntryPoint {
 		postReviewButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 			public void onClick(ClickEvent e){
 				String comment = commentBox.getText();
-				commentBox.setText("");
-				Review r = new Review(4, comment);
+				
+				int rating = ratingBox.getSelectedIndex();
+				Review r = new Review(rating, comment);
+				r.setUserName(user);
 				try {
 					selectedStation.addReview(r);
-				} catch (InvalidReviewException e1) {
-					e1.printStackTrace();
+				} catch (InvalidReviewException error) {
+					Window.alert(error.getMessage());
+					return;
 				}
+				commentBox.setText("");
 				stationService.updateStation(selectedStation, new AsyncCallback<Void>() {
 					@Override
 					public void onFailure(Throwable caught) {
@@ -232,13 +275,129 @@ public class ChargingStationFinderApp implements EntryPoint {
 				});
 			}
 		});
-		
+
 		commentBox.addStyleDependentName("comment");
 		commentBox.getElement().setPropertyString("placeholder", "Share Your Experience at This Station");
 		postReviewButton.addStyleDependentName("review");
 		
-		infoPanel.setWidget(3, 0, commentBox);
-		infoPanel.setWidget(4, 0, postReviewButton);
+		Label l = new Label("Rate this station:");
+		ratingBox.addItem("--");
+		for (int i = 1; i < 6; i++) {
+			ratingBox.addItem(i + " star");
+		}
+		
+		ratingSelectionPanel.add(l);
+		ratingSelectionPanel.add(ratingBox);
+
+		infoPanel.setWidget(4, 0, ratingSelectionPanel);
+		infoPanel.setWidget(5, 0, commentBox);
+		infoPanel.setWidget(6, 0, postReviewButton);
+
+		initializeEditBox();
+		initializeDeleteDialog();
+
+		edit.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				editBox.setText("Review Editor");
+				editBox.center();
+				editBoxInput.setText(reviewToBeEdited.getComment());
+				editBox.show();
+			}
+		});
+		
+		delete.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				deleteDialog.setText("WARNING");
+				deleteDialog.center();
+				deleteDialog.show();
+			}
+		});
+	}
+
+
+	private void initializeDeleteDialog() {
+		deleteDialog = new DialogBox();
+		confirmDeletion = new Button("YES");
+		cancelDeletion = new Button("NO");
+		
+		com.google.gwt.event.dom.client.ClickHandler deletionHandler = new com.google.gwt.event.dom.client.ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				if (event.getSource() == confirmDeletion) {
+					selectedStation.removeReview(reviewToBeEdited);
+					stationService.updateStation(selectedStation, new AsyncCallback<Void>() {
+						@Override
+						public void onFailure(Throwable caught) {
+							logger.log(Level.SEVERE, caught.getMessage());
+						}
+
+						@Override
+						public void onSuccess(Void result) {
+							displayReviews(selectedStation.getReviews());
+						}
+						
+					});
+				}
+				deleteDialog.hide();
+			}
+		};
+		
+		confirmDeletion.addClickHandler(deletionHandler);
+		cancelDeletion.addClickHandler(deletionHandler);
+		Label l = new Label("Are you sure you want to delete your review?");
+		Grid g = new Grid(2,2);
+		g.setWidget(0, 0, l);
+		g.setWidget(1, 0, confirmDeletion);
+		g.setWidget(1, 1, cancelDeletion);
+		deleteDialog.add(g);
+	}
+
+	private void initializeEditBox() {
+		editBox = new DialogBox();
+		editBoxGrid = new Grid(2,2);
+		editBoxInput = new RichTextArea();
+		closeEditBoxButton = new Button("close");
+		submitEditButton = new Button("submit");
+
+		closeEditBoxButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				editBox.hide();	
+				
+			}
+		});
+		
+		submitEditButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				try {
+					reviewToBeEdited.setComment(editBoxInput.getText());
+					selectedStation.removeReview(reviewToBeEdited);
+					selectedStation.addReview(reviewToBeEdited);
+					stationService.updateStation(selectedStation, new AsyncCallback<Void>() {
+						@Override
+						public void onFailure(Throwable caught) {
+							logger.log(Level.SEVERE, caught.getMessage());						
+						}
+
+						@Override
+						public void onSuccess(Void result) {
+							displayReviews(selectedStation.getReviews());
+						}
+					});
+				} catch (InvalidReviewException e) {
+					Window.alert(e.getMessage());
+				}
+				editBox.hide();
+			}		
+		});
+		
+		editBoxGrid.setWidget(0, 0, editBoxInput);
+		editBoxGrid.setWidget(1, 1, closeEditBoxButton);
+		editBoxGrid.setWidget(1, 0, submitEditButton);
+		editBox.add(editBoxGrid);
 	}
 
 	private void initializeAddStationsButton() {
@@ -282,30 +441,12 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void onSuccess(List<Station> result) {
 				if (result != null) {
 					stations = result;
-					try {
-						stationService.getUserEmailAddress(new AsyncCallback<String>(){
-
-							@Override
-							public void onFailure(Throwable caught) {
-								logger.log(Level.SEVERE, "fail");
-								
-							}
-
-							@Override
-							public void onSuccess(String result) {
-								userEmailAddress = result;
-								for (Station s : stations) {
-									if (s.getUserEmails().contains(result)) {
-										favouriteStationCounter++;
-									}
-								}
-								displayStations();
-								
-							}});
-					} catch (NotLoggedInException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					for (Station s : stations) {
+						if (s.getFavouriteUsers().contains(user)) {
+							favouriteStationCounter++;
+						}
 					}
+					displayStations();
 				}
 			}});
 	}
@@ -315,7 +456,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		Button okButton = new Button("Ok");
 		final Label l = new Label("Text");
 		inputBox.getElement().setPropertyString("placeholder", "Enter url Here");
-
+		inputBox.setFocus(true);
 
 		VerticalPanel vPanel = new VerticalPanel();
 		vPanel.add(inputBox);
@@ -457,7 +598,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 	private void displayStations() {
 		for (Station s: stations) {
-			if (s.getUserEmails().contains(userEmailAddress)) displayStation(s, "green");
+			if (s.getFavouriteUsers().contains(user)) displayStation(s, "green");
 			else displayStation(s, null);
 		}
 	}
@@ -493,12 +634,31 @@ public class ChargingStationFinderApp implements EntryPoint {
 			rating += reviews.get(i).getRating();
 		}
 		rating /= reviews.size();
-		String text = rating.toString();
+		
+		infoPanel.setText(2, 0, rating + " star");
 
+		VerticalPanel commentVerticalPanel = new VerticalPanel();
 		for (int i = 0; i < reviews.size(); i++) {
-			text = text.concat("\n" + reviews.get(i).getComment());
+			VerticalPanel eachComment = new VerticalPanel();
+			Label user = new Label(reviews.get(i).getUserName());
+			user.setStyleName("bold");
+			Label comment = new Label(reviews.get(i).getComment());
+			comment.setStyleName("autoLineBreak");
+			comment.setWidth("230px");
+			eachComment.add(user);
+			eachComment.add(comment);
+			eachComment.addStyleName("padding");
+
+			if (reviews.get(i).getUserName().equals(this.user)) {
+				//				Label edit = new Label("<edit> <delete>");
+				eachComment.add(edit);
+				eachComment.add(delete);
+				reviewToBeEdited = reviews.get(i);
+			}
+			commentVerticalPanel.add(eachComment);
 		}
-		infoPanel.setText(2, 0, text);
+
+		commentScrollArea.setWidget(commentVerticalPanel);
 	}
 
 	private void displayMap(FormPanel formPanel) {
@@ -527,39 +687,25 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				try {
-					stationService.getUserEmailAddress(new AsyncCallback<String>(){
+				if (favouriteStationCounter < 10) {
+					favouriteStationCounter++;
+					selectedStation.addFavouriteUser(user);
+					stationService.updateStation(selectedStation, new AsyncCallback<Void>(){
 
 						@Override
-						public void onFailure(Throwable caught) {}
+						public void onFailure(Throwable caught) {
+						}
 
 						@Override
-						public void onSuccess(String result) {
-							selectedStation.addUserEmailAddress(result);
-							if (favouriteStationCounter < 10) {
-								favouriteStationCounter++;
-							
-							stationService.updateStation(selectedStation, new AsyncCallback<Void>(){
-
-								@Override
-								public void onFailure(Throwable caught) {
-								}
-
-								@Override
-								public void onSuccess(Void result) {
-									selectedMarker.setIcon(GREEN_MARKER);
-								}});
-							}else {
-								Window.alert("You can't have more than 10 favourite station!");
-							}
-							
+						public void onSuccess(Void result) {
+							selectedMarker.setIcon(GREEN_MARKER);
 						}});
-				} catch (NotLoggedInException e) {
-					e.printStackTrace();
+				}else {
+					Window.alert("You can't have more than 10 favourite station!");
 				}
-				
+
 			}});
-		
+
 	}
 
 	private void handleError(Throwable error) {
