@@ -49,9 +49,9 @@ public class Station implements Serializable{
 		comments = new ArrayList<String>();
 		ratings = new ArrayList<Integer>();
 		dates = new ArrayList<Date>();
-//		userEmails = new ArrayList<String>();
 		userNames = new ArrayList<String>();
 		favouriteUsers = new HashSet<String>();
+		id = (long) this.hashCode();
 	}
 	
 	public void setId(Long id) {

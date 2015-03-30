@@ -19,7 +19,6 @@
 
   <!-- Other module inherits                                      -->
   <inherits name="com.google.maps.gwt.GoogleMaps" />
-  <inherits name="com.google.gwt.logging.Logging"/>
   <inherits name='com.xedge.jquery.GWTJQuery'/>
 
   <!-- Specify the app entry point class.                         -->

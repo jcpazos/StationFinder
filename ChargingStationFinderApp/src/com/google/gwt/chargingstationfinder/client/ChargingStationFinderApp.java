@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MenuBar;
@@ -82,8 +83,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private TextBox newSymbolTextBox = new TextBox();
 	private TextBox newSymbolTextBox1 = new TextBox();
 	private TextBox nearestStationTextBox = new TextBox();
-	private Button addAddressButton = new Button("Find Nearest Station");
-	private Button addAddressButton1 = new Button("Add Favourite Station");
+	private Button findStationButton = new Button("Find Nearest Station");
+	private Button favouriteButton = new Button("Add to My Favourite Station");
 	private Button addStationsButton = new Button("AddStations");
 	private Label lastUpdatedLabel = new Label();
 	private Anchor signInLink = new Anchor("Sign In");
@@ -127,7 +128,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private HorizontalPanel ratingSelectionPanel = new HorizontalPanel();
 	private String userEmailAddress;
 	private final String removeStationText = "Remove Favourite Station";
-	private  ArrayList<Station> favouriteStations = new ArrayList<Station>();
+	private ArrayList<Station> favouriteStations = new ArrayList<Station>();
+	private HorizontalPanel settingButtons = new HorizontalPanel();
 
 	//	private String[][] favouriteStations = new String[23][4];
 	private int index;
@@ -196,16 +198,16 @@ public class ChargingStationFinderApp implements EntryPoint {
 		newSymbolTextBox.addStyleName("inputBox");
 		newSymbolTextBox.getElement().setPropertyString("placeholder", "Enter Postal Code Here");
 		addPanel.add(newSymbolTextBox);
-		addPanel.add(addAddressButton);
-		//addPanel.add(nearestStationTextBox);
+		addPanel.add(findStationButton);
 		addPanel.addStyleName("addressInput");
 
-		addPanel.add(addAddressButton1);
-		addPanel.addStyleName("addressInput1");
+		settingButtons.add(favouriteButton);
+		settingButtons.addStyleName("settingButtons");
+		settingButtons.setSpacing(10);
 
 		// Assemble control panel.
+		controlPanel.add(settingButtons);
 		controlPanel.add(addPanel);
-		controlPanel.add(lastUpdatedLabel);
 		initializeAddStationsButton();
 		controlPanel.addStyleName("control");
 
@@ -225,7 +227,10 @@ public class ChargingStationFinderApp implements EntryPoint {
 			});
 		}
 		settingMenu.addItem("Radius setting", radiusMenu);
+		menuBar.addStyleName("radiusSetting");
 		menuBar.add(settingMenu);
+		settingButtons.add(menuBar);
+
 
 		initializeReviewFunction();
 
@@ -234,7 +239,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		infoPanel.getCellFormatter().addStyleName(1, 0, "operator");
 		infoPanel.getCellFormatter().addStyleName(2, 0, "narrow");
 		infoPanel.getCellFormatter().addStyleName(3, 0, "rating");
-		infoPanel.getCellFormatter().addStyleName(4, 0, "narrow");
+		infoPanel.getCellFormatter().addStyleName(4, 0, "narrowWhite");
 		infoPanel.getCellFormatter().addStyleName(5, 0, "commentBoxCell");
 		infoPanel.getCellFormatter().addStyleName(6, 0, "reviewButtonCell");
 
@@ -242,7 +247,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 		RootPanel.get("control").add(controlPanel);
 		RootPanel.get("info").add(infoPanel);
 		RootPanel.get().addStyleName("background");
-		RootPanel.get("menu").add(menuBar);
 
 		// Move cursor focus to the input box.
 		newSymbolTextBox.setFocus(true);	    
@@ -417,8 +421,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 				@Override
 				public void onSuccess(Void result) {
-					addStationsButton.addStyleName("adminButton");
-					controlPanel.insert(addStationsButton, 0);
+					//					addStationsButton.addStyleName("adminButton");
+					settingButtons.insert(addStationsButton, 0);
 					//Unfortunately GWT has two classes ClickHandler that do very different things
 					addStationsButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 
@@ -458,7 +462,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 
 	private void requestParsingInput() {
-		Button okButton = new Button("Ok");
+		Button okButton = new Button("OK");
 		final Label l = new Label("Text");
 		inputBox.getElement().setPropertyString("placeholder", "Enter url Here");
 		inputBox.setFocus(true);
@@ -541,7 +545,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 						userPosition = event.getLatLng();
 						userMarker.setPosition(userPosition);
 						try {
-							showRoute(findNearestStation(userPosition));
+							selectedStation = findNearestStation(userPosition);
+							displayStationInfo(selectedStation);
+							showRoute(selectedStation);
 						} catch (NoStationFoundException e) {
 							//there is no station the exception displays a message
 						}
@@ -553,7 +559,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 
 	private void initializeaddNewSymbolTextBox() {
-		addAddressButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler(){
+		findStationButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler(){
 
 			@Override
 			public void onClick(ClickEvent event) {
@@ -571,7 +577,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 						userPosition = myLatLng;
 						userMarker.setPosition(myLatLng);
 						try {
-							showRoute(findNearestStation(myLatLng));
+							selectedStation = findNearestStation(myLatLng);
+							displayStationInfo(selectedStation);
+							showRoute(selectedStation);
 						} catch (NoStationFoundException e) {}
 					}
 				});
@@ -612,8 +620,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private void displayStation(Station s, String markerColour) {
 		final Station station = s;
 		final LatLng position = LatLngConverter.toLatLng((s.getPosition()));
-		final String address = s.getAddress();
-		final String operator = s.getOperator();
 
 		final MarkerOptions markerOptions = MarkerOptions.create();
 		markerOptions.setPosition(position);
@@ -626,30 +632,43 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void handle(MouseEvent event) {
 				selectedMarker = m;
 				selectedStation = station;
-				addAddressButton1.setText("Add Favourite Station");
-				if (favouriteStations.contains(selectedStation)) addAddressButton1.setText(removeStationText);
+				favouriteButton.setText("Add Favourite Station");
+				if (favouriteStations.contains(selectedStation)) favouriteButton.setText(removeStationText);
 				showRoute(station);
-				infoPanel.setText(0, 0, "Address " + address);
-				infoPanel.setText(1, 0, "Operator " + operator);
-				displayReviews(station.getReviews());
+				displayStationInfo(station);
 			}});
 	}
 
+	private void displayStationInfo(Station s) {
+		final LatLng position = LatLngConverter.toLatLng((s.getPosition()));
+		final String address = s.getAddress();
+		final String operator = s.getOperator();
+		infoPanel.setText(0, 0, "Address " + address);
+		infoPanel.setText(1, 0, "Operator " + operator);
+		displayReviews(s.getReviews());
+	}
+
+
 	private void displayReviews(ArrayList<Review> reviews) {
-		Integer rating = 0;
+		float rating = 0;
 		for (int i = 0; i < reviews.size(); i++) {
 			rating += reviews.get(i).getRating();
 		}
 		rating /= reviews.size();
+		rating = Math.round(rating);
 
-		if (rating != 0) {
-			infoPanel.setText(2, 0, rating + " star");
+		if (reviews.size() != 0) {
+			HorizontalPanel starPanel = new HorizontalPanel();
+			for (int i = 0; i < rating; i++) {
+				Image star = new Image("images/golden_star.png");
+				starPanel.add(star);
+			}
+			infoPanel.setWidget(2, 0, starPanel);
 		}else {
 			infoPanel.setText(2, 0, "Be the first one to rate this station!");
 		}
 
 		VerticalPanel commentVerticalPanel = new VerticalPanel();
-		commentVerticalPanel.setSpacing(10);
 		for (int i = 0; i < reviews.size(); i++) {
 			VerticalPanel eachComment = new VerticalPanel();
 			Label user = new Label(reviews.get(i).getUserName());
@@ -659,17 +678,21 @@ public class ChargingStationFinderApp implements EntryPoint {
 			comment.setWidth("230px");
 			eachComment.add(user);
 			eachComment.add(comment);
-//			eachComment.addStyleName("padding");
+			eachComment.addStyleName("pad");
 
 			if (reviews.get(i).getUserName().equals(this.user)) {
-				//				Label edit = new Label("<edit> <delete>");
+				HorizontalPanel editPanel = new HorizontalPanel();
 				eachComment.add(edit);
 				eachComment.add(delete);
+				editPanel.add(edit);
+				editPanel.add(delete);
+				eachComment.add(editPanel);
 				reviewToBeEdited = reviews.get(i);
 			}
+			Label emptySpace = new Label("=================");
+			eachComment.add(emptySpace);
 			commentVerticalPanel.add(eachComment);
 		}
-
 		commentScrollArea.setWidget(commentVerticalPanel);
 	}
 
@@ -695,11 +718,11 @@ public class ChargingStationFinderApp implements EntryPoint {
 	}
 
 	private void initializeAddAddressButton1() {
-		addAddressButton1.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
+		favouriteButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				if (addAddressButton1.getText().equals(removeStationText)) {
+				if (favouriteButton.getText().equals(removeStationText)) {
 					favouriteStations.remove(selectedStation);
 					selectedStation.removeFavouriteUser(user);
 					selectedMarker.setIcon("http://maps.google.com/mapfiles/ms/icons/red-dot.png");
