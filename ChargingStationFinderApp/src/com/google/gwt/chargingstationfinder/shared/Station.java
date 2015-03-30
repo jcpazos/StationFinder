@@ -34,8 +34,6 @@ public class Station implements Serializable{
 	private ArrayList<Integer> ratings;
 	@Persistent
 	private ArrayList<Date> dates;
-//	@Persistent
-//	private ArrayList<String> userEmails;
 	@Persistent
 	private HashSet<String> favouriteUsers;
 	@Persistent
@@ -147,15 +145,12 @@ public class Station implements Serializable{
 		ArrayList<Review> reviews = new ArrayList<Review>();
 		for (int i = 0; i < comments.size(); i++) {
 			Review r = new Review(ratings.get(i), comments.get(i));
-//			r.setUserEmail(userEmails.get(i));
 			r.setUserName(userNames.get(i));
 			r.setDate(dates.get(i));
 			reviews.add(r);
 		}
 		return reviews;
 	}
-	
-	
 	
 	public ArrayList<String> getComments() {
 		return comments;
@@ -168,10 +163,6 @@ public class Station implements Serializable{
 	public ArrayList<Date> getDates() {
 		return dates;
 	}
-
-//	public ArrayList<String> getUserEmails() {
-//		return userEmails;
-//	}
 	
 	public HashSet<String> getFavouriteUsers() {
 		return this.favouriteUsers;
@@ -189,9 +180,6 @@ public class Station implements Serializable{
 		this.dates = dates;
 	}
 
-//	public void setUserEmails(ArrayList<String> userEmails) {
-//		this.userEmails = userEmails;
-//	}
 
 	public ArrayList<String> getUserNames() {
 		return userNames;
@@ -203,7 +191,10 @@ public class Station implements Serializable{
 
 	public void addFavouriteUser(String result) {
 		favouriteUsers.add(result);
-		
+	}
+
+	public void removeFavouriteUser(String result) {
+		favouriteUsers.remove(result);
 	}
 
 }

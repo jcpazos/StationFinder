@@ -18,6 +18,12 @@ h1 {
 	font-size: 16pt;
 }
 
+.btn-group {
+	position : absolute;
+	right : 5%;
+	top : 8%;
+}
+
 /** Most GWT widgets already have a style name defined */
 .gwt-DialogBox {
 	width: 400px;
@@ -81,7 +87,7 @@ h1 {
 	position: absolute;
 	left: 0px;
 	bottom: 0px;
-	height: 83%;
+	height: 82%;
 	width: 20%;
 	border: medium solid black;
 }
@@ -127,7 +133,7 @@ h1 {
 }
 
 .padding {
-	padding: 5px 0px 5px 0px;
+	padding: 5px 0px 5px 0px !important;
 }
 
 .bold {

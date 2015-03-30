@@ -125,6 +125,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 	private Button cancelDeletion;
 	private ListBox ratingBox = new ListBox();
 	private HorizontalPanel ratingSelectionPanel = new HorizontalPanel();
+	private String userEmailAddress;
+	private final String removeStationText = "Remove Favourite Station";
+	private  ArrayList<Station> favouriteStations = new ArrayList<Station>();
 
 	//	private String[][] favouriteStations = new String[23][4];
 	private int index;
@@ -139,6 +142,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 	public void onModuleLoad() {
 
 		// Check login status using login service.
+		RootPanel.get("fb-root").setVisible(false);
 		LoginServiceAsync loginService = GWT.create(LoginService.class);
 		loginService.login(GWT.getHostPageBaseURL(), new AsyncCallback<LoginInfo>() {
 			public void onFailure(Throwable error) {
@@ -182,6 +186,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 	private void loadStationFinderApp() {
 		RootPanel.get("tweetBtn").getElement().getStyle().setProperty("visibility", "visible");
+		RootPanel.get("fb-root").setVisible(true);
+		RootPanel.get("btn-group").getElement().getStyle().setProperty("visibility", "visible");
 		// Set up sign out hyperlink.
 		signOutLink.setHref(loginInfo.getLogoutUrl());
 		signOutLink.addStyleName("signOut");
@@ -205,11 +211,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 		infoPanel.setText(0,0,"Address:");
 		infoPanel.setText(1,0,"Operator:");
-		//		commentArea.addStyleName("scrollBar");
 		commentScrollArea.setHeight("150px");
 		infoPanel.setWidget(3, 0, commentScrollArea);
-		//		infoPanel.setText(3,0,"Radius is now set to be " + setting.radius.getName());
-
 		menuBar.addStyleName("menu");
 		final MenuBar radiusMenu = new MenuBar(true);
 		for (final RadiusSetting radius: setting.radius.getClass().getEnumConstants()) {
@@ -218,7 +221,6 @@ public class ChargingStationFinderApp implements EntryPoint {
 				public void execute() {
 					setting.setRadius(radius);
 					settingMenu.setAnimationEnabled(true);
-					//					infoPanel.setText(3, 0, "Radius is now set to be " + setting.radius.getName());
 				}
 			});
 		}
@@ -252,11 +254,15 @@ public class ChargingStationFinderApp implements EntryPoint {
 		postReviewButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 			public void onClick(ClickEvent e){
 				String comment = commentBox.getText();
-				
+
 				int rating = ratingBox.getSelectedIndex();
 				Review r = new Review(rating, comment);
 				r.setUserName(user);
 				try {
+					if (selectedStation == null) {
+						Window.alert("Please select a station first!");
+						return;
+					}
 					selectedStation.addReview(r);
 				} catch (InvalidReviewException error) {
 					Window.alert(error.getMessage());
@@ -279,13 +285,13 @@ public class ChargingStationFinderApp implements EntryPoint {
 		commentBox.addStyleDependentName("comment");
 		commentBox.getElement().setPropertyString("placeholder", "Share Your Experience at This Station");
 		postReviewButton.addStyleDependentName("review");
-		
+
 		Label l = new Label("Rate this station:");
 		ratingBox.addItem("--");
 		for (int i = 1; i < 6; i++) {
 			ratingBox.addItem(i + " star");
 		}
-		
+
 		ratingSelectionPanel.add(l);
 		ratingSelectionPanel.add(ratingBox);
 
@@ -305,7 +311,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				editBox.show();
 			}
 		});
-		
+
 		delete.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
@@ -321,7 +327,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 		deleteDialog = new DialogBox();
 		confirmDeletion = new Button("YES");
 		cancelDeletion = new Button("NO");
-		
+
 		com.google.gwt.event.dom.client.ClickHandler deletionHandler = new com.google.gwt.event.dom.client.ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
@@ -337,13 +343,13 @@ public class ChargingStationFinderApp implements EntryPoint {
 						public void onSuccess(Void result) {
 							displayReviews(selectedStation.getReviews());
 						}
-						
+
 					});
 				}
 				deleteDialog.hide();
 			}
 		};
-		
+
 		confirmDeletion.addClickHandler(deletionHandler);
 		cancelDeletion.addClickHandler(deletionHandler);
 		Label l = new Label("Are you sure you want to delete your review?");
@@ -365,10 +371,9 @@ public class ChargingStationFinderApp implements EntryPoint {
 			@Override
 			public void onClick(ClickEvent event) {
 				editBox.hide();	
-				
 			}
 		});
-		
+
 		submitEditButton.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
@@ -393,7 +398,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 				editBox.hide();
 			}		
 		});
-		
+
 		editBoxGrid.setWidget(0, 0, editBoxInput);
 		editBoxGrid.setWidget(1, 1, closeEditBoxButton);
 		editBoxGrid.setWidget(1, 0, submitEditButton);
@@ -443,7 +448,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 					stations = result;
 					for (Station s : stations) {
 						if (s.getFavouriteUsers().contains(user)) {
-							favouriteStationCounter++;
+							favouriteStations.add(s);
 						}
 					}
 					displayStations();
@@ -621,6 +626,8 @@ public class ChargingStationFinderApp implements EntryPoint {
 			public void handle(MouseEvent event) {
 				selectedMarker = m;
 				selectedStation = station;
+				addAddressButton1.setText("Add Favourite Station");
+				if (favouriteStations.contains(selectedStation)) addAddressButton1.setText(removeStationText);
 				showRoute(station);
 				infoPanel.setText(0, 0, "Address " + address);
 				infoPanel.setText(1, 0, "Operator " + operator);
@@ -634,10 +641,15 @@ public class ChargingStationFinderApp implements EntryPoint {
 			rating += reviews.get(i).getRating();
 		}
 		rating /= reviews.size();
-		
-		infoPanel.setText(2, 0, rating + " star");
+
+		if (rating != 0) {
+			infoPanel.setText(2, 0, rating + " star");
+		}else {
+			infoPanel.setText(2, 0, "Be the first one to rate this station!");
+		}
 
 		VerticalPanel commentVerticalPanel = new VerticalPanel();
+		commentVerticalPanel.setSpacing(10);
 		for (int i = 0; i < reviews.size(); i++) {
 			VerticalPanel eachComment = new VerticalPanel();
 			Label user = new Label(reviews.get(i).getUserName());
@@ -647,7 +659,7 @@ public class ChargingStationFinderApp implements EntryPoint {
 			comment.setWidth("230px");
 			eachComment.add(user);
 			eachComment.add(comment);
-			eachComment.addStyleName("padding");
+//			eachComment.addStyleName("padding");
 
 			if (reviews.get(i).getUserName().equals(this.user)) {
 				//				Label edit = new Label("<edit> <delete>");
@@ -687,25 +699,34 @@ public class ChargingStationFinderApp implements EntryPoint {
 
 			@Override
 			public void onClick(ClickEvent event) {
-				if (favouriteStationCounter < 10) {
-					favouriteStationCounter++;
-					selectedStation.addFavouriteUser(user);
-					stationService.updateStation(selectedStation, new AsyncCallback<Void>(){
-
-						@Override
-						public void onFailure(Throwable caught) {
-						}
-
-						@Override
-						public void onSuccess(Void result) {
-							selectedMarker.setIcon(GREEN_MARKER);
-						}});
-				}else {
-					Window.alert("You can't have more than 10 favourite station!");
+				if (addAddressButton1.getText().equals(removeStationText)) {
+					favouriteStations.remove(selectedStation);
+					selectedStation.removeFavouriteUser(user);
+					selectedMarker.setIcon("http://maps.google.com/mapfiles/ms/icons/red-dot.png");
 				}
 
-			}});
+				else if (favouriteStations.size() == 10) {
+					Window.alert("You can't have more than 10 favourite station!");
+					return;
+				}
 
+				else {
+					favouriteStations.add(selectedStation);
+					selectedStation.addFavouriteUser(user);
+					selectedMarker.setIcon(GREEN_MARKER);
+				}
+
+				stationService.updateStation(selectedStation, new AsyncCallback<Void>(){
+
+					@Override
+					public void onFailure(Throwable caught) {
+					}
+
+					@Override
+					public void onSuccess(Void result) {
+					}});
+			}
+		});
 	}
 
 	private void handleError(Throwable error) {

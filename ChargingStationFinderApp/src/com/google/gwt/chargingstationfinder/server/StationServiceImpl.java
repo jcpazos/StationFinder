@@ -65,8 +65,6 @@ StationService {
 			pm.close();
 		}
 	}
-	  
-
 
 	public List<Station> getStations() throws NotLoggedInException {
 		checkLoggedIn();
@@ -96,8 +94,6 @@ StationService {
 		}
 	}
 
-
-
 	private void checkLoggedIn() throws NotLoggedInException {
 		if (getUser() == null) {
 			throw new NotLoggedInException("Not logged in.");
@@ -113,40 +109,10 @@ StationService {
 		return PMF.getPersistenceManager();
 	}
 
-
-	public void removeFavouriteStation(String address) throws NotLoggedInException {
-		checkLoggedIn();
-		PersistenceManager pm = getPersistenceManager();
-		try {
-			long deleteCount = 0;
-			Query q = pm.newQuery(FavouriteStations.class, "user == u");
-			q.declareParameters("com.google.appengine.api.users.User u");
-			List<Station> stations = (List<Station>) q.execute(getUser());
-			for (Station station : stations) {
-				if (address.equals(station.getAddress())) {
-					deleteCount++;
-					pm.deletePersistent(station);
-				}
-			}
-			if (deleteCount != 1) {
-				logger.log(Level.WARNING, "removeStock deleted "+deleteCount+" Stocks");
-			}
-		} finally {
-			pm.close();
-		}
-	}
-
-
-
 	public void checkIsAdmin() throws NotAdminException {
 		if (!UserServiceFactory.getUserService().isUserAdmin())
 			throw new NotAdminException("User is not an admin");
 	}
-
-
-//	public String getUserEmailAddress() throws NotLoggedInException {
-//		return getUser().getEmail();
-//	}
 	
 	public String getUserName() throws NotLoggedInException {
 		return getUser().getNickname();

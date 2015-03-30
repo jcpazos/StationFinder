@@ -11,11 +11,11 @@ import com.google.maps.gwt.client.LatLng;
 
 @RemoteServiceRelativePath("station")
 public interface StationService extends RemoteService {
-  public void addStation(Station s) throws NotLoggedInException, NotAdminException;
-  public void removeStation(String address) throws NotLoggedInException;
-  public List<Station> getStations() throws NotLoggedInException;
-  public void removeFavouriteStation(String address) throws NotLoggedInException;
-  public String getUserName() throws NotLoggedInException;
-  public void updateStation(Station s);
-  public void checkIsAdmin() throws NotAdminException;
+	public void addStation(Station s) throws NotLoggedInException, NotAdminException;
+	public void removeStation(String address) throws NotLoggedInException;
+	public List<Station> getStations() throws NotLoggedInException;
+//	public void removeFavouriteStation(String address) throws NotLoggedInException;
+	public String getUserName() throws NotLoggedInException;
+	public void updateStation(Station s);
+	public void checkIsAdmin() throws NotAdminException;
 }

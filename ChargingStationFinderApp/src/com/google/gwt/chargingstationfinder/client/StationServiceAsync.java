@@ -8,13 +8,13 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.maps.gwt.client.LatLng;
 
 public interface StationServiceAsync {
-	
+
 	public void addStation(Station s, AsyncCallback<Void> async);
 	public void removeStation(String address, AsyncCallback<Void> async);
 	public void getStations(AsyncCallback<List<Station>> async);
 	public void checkIsAdmin(AsyncCallback<Void> async) throws NotAdminException;
 	public void getUserName(AsyncCallback<String> async) throws NotLoggedInException;
-	  public void removeFavouriteStation(String address,AsyncCallback<Void> async) throws NotLoggedInException;
+//	public void removeFavouriteStation(String address,AsyncCallback<Void> async) throws NotLoggedInException;
 	public void updateStation(Station selectedStation, AsyncCallback<Void> async);
 
 }
